@@ -109,4 +109,9 @@
     <Content Include="compare.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <PropertyGroup>
+    <PreBuildEvent>if $(ConfigurationName) == Release (
+  C:\Code\~VBS\setVersionByDate.vbs "$(ProjectDir)" T
+)</PreBuildEvent>
+  </PropertyGroup>
 </Project>

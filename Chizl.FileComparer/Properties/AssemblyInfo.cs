@@ -8,10 +8,10 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyTitle("Chizl.FileComparer")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("")]
+[assembly: AssemblyCompany("chizl.com")]
 [assembly: AssemblyProduct("Chizl.FileComparer")]
-[assembly: AssemblyCopyright("Copyright ©  2025")]
-[assembly: AssemblyTrademark("")]
+[assembly: AssemblyCopyright("© 2025 chizl.com")]
+[assembly: AssemblyTrademark("chizl.com ™")]
 [assembly: AssemblyCulture("")]
 
 // Setting ComVisible to false makes the types in this assembly not visible
@@ -29,5 +29,8 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 //
-[assembly: AssemblyVersion("1.0.0.0")]
-[assembly: AssemblyFileVersion("1.0.0.0")]
+[assembly: AssemblyVersion("5.8.0.0")]
+[assembly: AssemblyFileVersion("5.8.17.980")]
+[assembly: AssemblyInformationalVersion("5.8.17.0")]
+[assembly: AssemblyKeyFileAttribute("")]
+[assembly: AssemblyDelaySignAttribute(false)]
