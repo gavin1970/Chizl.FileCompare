@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.13.36105.23
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chizl.FileCompare", "Chizl.FileCompare.csproj", "{24318B3E-0B71-4241-91EA-1C4AC422D8B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Chizl.FileComparer", "Chizl.FileComparer\Chizl.FileComparer.csproj", "{8A9ABA7A-521D-4E55-9CCC-3BAA675B5EAF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{24318B3E-0B71-4241-91EA-1C4AC422D8B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{24318B3E-0B71-4241-91EA-1C4AC422D8B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{24318B3E-0B71-4241-91EA-1C4AC422D8B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{24318B3E-0B71-4241-91EA-1C4AC422D8B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8A9ABA7A-521D-4E55-9CCC-3BAA675B5EAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8A9ABA7A-521D-4E55-9CCC-3BAA675B5EAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8A9ABA7A-521D-4E55-9CCC-3BAA675B5EAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8A9ABA7A-521D-4E55-9CCC-3BAA675B5EAF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E30927E8-FEE6-4419-AD13-B83B43049395}
+	EndGlobalSection
+EndGlobal

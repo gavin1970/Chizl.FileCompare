@@ -1,0 +1,282 @@
+﻿using System;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Threading;
+using System.Windows.Forms;
+using TextLogManager;
+
+namespace IGNORE_ME
+{
+    public class TestClass
+    {
+        delegate void StringBoolDelegate(string s, bool b);
+        delegate void StringDelegate(string s);
+
+        private readonly STreeMap tMap = new STreeMap();
+        private readonly LogMgr logger = new LogMgr();
+        private readonly LoadDataInfo loadData = new LoadDataInfo();
+
+        private string currentMouseOver = string.Empty;
+        private Thread threadScan;
+
+        #region Constructor
+        public FrmMain()
+        {
+            InitializeComponent();
+            this.Text = $"{About.AppTitle} v{About.ProductVersion.MajorMinor}";
+        }
+        #endregion
+
+        #region Private Methods
+        private void SetEnable(string cntrlName, bool enable)
+        {
+            if (InvokeRequired)
+            {
+                var d = new StringBoolDelegate(SetEnable);
+                if (!Disposing && !IsDisposed)
+                {
+                    try { Invoke(d, cntrlName, enable); }
+                    catch (ObjectDisposedException ex) { Debug.WriteLine(ex.Message); }
+                    catch { }
+                }
+            }
+            else if (!Disposing && !IsDisposed)
+            {
+                Control ctn = FindControlByName(this, cntrlName);
+                if (ctn != null)
+                    ctn.Enabled = enable;
+            }
+        }
+        private void SetVisible(string cntrlName, bool visible)
+        {
+            if (InvokeRequired)
+            {
+                var d = new StringBoolDelegate(SetVisible);
+                if (!Disposing && !IsDisposed)
+                {
+                    try { Invoke(d, cntrlName, visible); }
+                    catch (ObjectDisposedException ex) { Debug.WriteLine(ex.Message); }
+                    catch { }
+                }
+            }
+            else if (!Disposing && !IsDisposed)
+            {
+                Control ctn = FindControlByName(this, cntrlName);
+                if (ctn != null)
+                    ctn.Visible = visible;
+            }
+        }
+        private void SetStatus(string status)
+        {
+            if (InvokeRequired)
+            {
+                var d = new StringDelegate(SetStatus);
+                if (!Disposing && !IsDisposed)
+                {
+                    try { Invoke(d, status); }
+                    catch (ObjectDisposedException ex) { Debug.WriteLine(ex.Message); }
+                    catch { }
+                }
+            }
+            else if (!Disposing && !IsDisposed)
+            {
+                ToolStripItem tsi = FindToolStripItemByName(MainStatusStrip, "ToolStatus");
+                if (tsi != null)
+                    tsi.Text = status;
+                else
+                    this.ToolStatus.Text = status;
+
+                this.TreeMapPanel.Invalidate();
+                ButtonStatus();
+            }
+        }
+        private void StartScan(string path, bool startOver)
+        {
+            if ((threadScan == null || !threadScan.IsAlive) && !string.IsNullOrWhiteSpace(path))
+            {
+                this.LblCurrentPath.Text = path;
+
+                var dirInfo = new DirectoryInfo(path);
+                if (dirInfo.Exists)
+                {
+                    threadScan = new Thread(() =>
+                    {
+                        DateTime dtStart = DateTime.Now;
+                        bool success = loadData.StartScan(path, startOver);
+                        SetVisible("ButtonStopScan", false);
+                        SetVisible("ButtonStartScan", true);
+                        TimeSpan tsLength = DateTime.Now.Subtract(dtStart);
+
+                        if (!success)
+                        {
+                            string msg = loadData.LastError != null ?
+                                            $"Scan failed - {loadData.LastError.Message}" :
+                                            "Unknown Exception Occured";
+
+                            SetStatus(msg);
+                            MessageBox.Show(msg, About.AppTitle, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        else
+                        {
+                            SetStatus($"Scan completed in {tsLength.TotalSeconds}s.\nFiles: {loadData.CurrentScanFolderDetails.TotalFileCount}, Folders: {loadData.CurrentScanFolderDetails.TotalDirectoryCount}\nTotal Byte Size: {loadData.CurrentScanFolderDetails.TotalFileByteSize}, Total Size: {Common.FormatByteSize(loadData.CurrentScanFolderDetails.TotalFileByteSize)}");
+                        }
+
+                        return;
+                    });
+
+                    if (startOver)
+                    {
+                        loadData.OrgScanFolderDetails = new FolderData();
+                        loadData.CurrentScanFolderDetails = new FolderData();
+                    }
+
+                    SetVisible("ButtonStartScan", false);
+                    SetVisible("ButtonStopScan", true);
+                    SetStatus("Scan started...");
+                    threadScan.Start();
+                }
+            }
+        }
+        private void StopScan()
+        {
+            if (loadData.IsScanning)
+                loadData.StopScan();
+
+            while (loadData.IsScanning)
+                Thread.Sleep(0);    //cycle cpu
+        }
+        private void ButtonStatus()
+        {
+            if (loadData.CurrentScanFolderDetails.FullPath == loadData.OrgScanFolderDetails.FullPath)
+            {
+                BtnBackFolder.Enabled = false;
+                BtnRoot.Enabled = false;
+            }
+            else
+            {
+                BtnRoot.Enabled = true;
+                BtnBackFolder.Enabled = true;
+            }
+        }
+
+        /// <summary>
+        /// Only for controls, not ToolStripItems
+
+        /// </summary>
+
+
+        /// <param name="parent"></param>
+
+        /// <param name="cntrlName"></param>
+
+
+        /// <returns></returns>
+        private Control FindControlByName(Control parent, string cntrlName)
+        {
+            foreach (Control ctrl in parent.Controls)
+            {
+                if (ctrl.Name == cntrlName)
+                    return ctrl;
+            }
+
+            foreach (Control ctrl in parent.Controls)
+            {
+                Control retVal = FindControlByName(ctrl, cntrlName);
+                if (retVal != null)
+                    return retVal;
+            }
+
+            return null;
+        }
+        /// <summary>
+        /// Only for controls, not ToolStripItems
+        /// </summary>
+        /// <param name="parent"></param>
+        /// <param name="cntrlName"></param>
+        /// <returns></returns>
+        private ToolStripItem FindToolStripItemByName(ToolStrip parent, string tsiName)
+        {
+            ToolStripItem retVal = parent.Items[tsiName];
+            if (retVal != null)
+                return retVal;
+
+            foreach (ToolStripItem tsi in parent.Items)
+            {
+                if (tsi.Name == tsiName)
+                    return tsi;
+            }
+
+            foreach (ToolStrip ctrl in parent.Items)
+            {
+                retVal = FindToolStripItemByName(ctrl, tsiName);
+                if (retVal != null)
+                    return retVal;
+            }
+
+            return null;
+        }
+        #endregion
+
+        #region Private Control Events
+        private void FrmMain_Resize(object sender, EventArgs e)
+        {
+            this.TreeMapPanel.Invalidate();
+        }
+        private void FrmMain_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            StopScan();
+            logger?.Dispose();
+        }
+        private void ButtonStartScan_Click(object sender, EventArgs e)
+        {
+            string path = this.CmbStartingDriveOrPath.Text.Trim();
+            StartScan(path, true);
+        }
+        private void ButtonStopScan_Click(object sender, EventArgs e)
+        {
+            StopScan();
+        }
+        private void TreeMapPanel_Paint(object sender, PaintEventArgs e)
+        {
+            Graphics gfx = e.Graphics;
+            gfx.Clear(Color.Gray);
+
+            if (loadData.CurrentScanFolderDetails.TotalFileByteSize <= 0)
+                return;
+
+            tMap.DrawCharts(gfx, loadData.CurrentScanFolderDetails, this.TreeMapPanel.Size);
+        }
+        private void TreeMapPanel_MouseMove(object sender, MouseEventArgs e)
+        {
+            this.currentMouseOver = loadData.GetInfoByLocation(e.Location);
+        }
+        private void TreeMapPanel_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            if (ButtonStartScan.Enabled && !string.IsNullOrWhiteSpace(this.currentMouseOver) && Directory.Exists(this.currentMouseOver))
+            {
+                StartScan(this.currentMouseOver, false);
+                ButtonStatus();
+            }
+        }
+
+        private void BtnRoot_Click(object sender, EventArgs e)
+        {
+            StartScan(loadData.OrgScanFolderDetails.FullPath, false);
+            ButtonStatus();
+
+        }
+
+        private void BtnBackFolder_Click(object sender, EventArgs e)
+        {
+            if (loadData.CurrentScanFolderDetails.FullPath != loadData.OrgScanFolderDetails.FullPath)
+            {
+                string backPath = loadData.CurrentScanFolderDetails.FullPath.Substring(0, loadData.CurrentScanFolderDetails.FullPath.LastIndexOf("\\"));
+                StartScan(backPath, false);
+            }
+
+            ButtonStatus();
+        }
+        #endregion
+    }
+}

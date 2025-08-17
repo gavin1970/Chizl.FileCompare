@@ -1,0 +1,16 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="Chizl.FileComparerDemo\**" />
+    <Compile Remove="Chizl.FileComparer\**" />
+    <EmbeddedResource Remove="Chizl.FileComparerDemo\**" />
+    <EmbeddedResource Remove="Chizl.FileComparer\**" />
+    <None Remove="Chizl.FileComparerDemo\**" />
+    <None Remove="Chizl.FileComparer\**" />
+  </ItemGroup>
+
+</Project>
