@@ -8,6 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using Chizl.Applications;
+using System.IO;
 
 namespace Chizl.FileComparer
 {
@@ -40,7 +41,6 @@ namespace Chizl.FileComparer
             OldAsciiFile.Text = _oldFile;
             NewAsciiFile.Text = _newFile;
             ScoreThresholdDropdown.Text = "30%";
-
             // hook up to the scroll handlers for the rich text boxes
             this.OldAsciiContent.VScroll += new EventHandler(this.RichText_VScroll);
             this.OldAsciiContent.HScroll += new EventHandler(this.RichText_HScroll);
@@ -130,6 +130,8 @@ namespace Chizl.FileComparer
                 NewAsciiFile.Text = fileName;
         }
         private void CompareButtonToollbar_Click(object sender, EventArgs e) => CompareFiles();
+        private void OldAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(OldAsciiFile.Text);
+        private void NewAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(NewAsciiFile.Text);
 
         private void AddModifiedLine(RichTextBox rb, string text, bool isNew)
         {
@@ -163,7 +165,18 @@ namespace Chizl.FileComparer
             rb.SelectionBackColor = color.IsEmpty ? rb.BackColor : color;
             rb.AppendText(text);
         }
-        private void ColourRrbText(RichTextBox rtb)
+        private void ColourRrbText(RichTextBox rtb, string fullFilePath)
+        {
+            var ext = fullFilePath.ToLower().StartsWith(".\\testfiles\\test_") ? ".cs" : Path.GetExtension(OldAsciiFile.Text).ToLower();
+
+            switch (ext)
+            {
+                case ".cs":
+                    ColorCSharpKeywords(rtb);
+                    break;
+            }
+        }
+        private void ColorCSharpKeywords(RichTextBox rtb)
         {
             foreach (Match match in CSharpRegexPatterns.Pattern.Matches(rtb.Text))
             {
@@ -204,6 +217,7 @@ namespace Chizl.FileComparer
 
                 var prevLineSize = 30;
                 var fileComparison = DiffTool.CompareFiles(OldAsciiFile.Text, NewAsciiFile.Text, score_threshold);
+                StatusText.Text = $"Line by Line Status:  Added( {fileComparison.Diffs.Added} ), Deleted( {fileComparison.Diffs.Deleted} ), Modified( {fileComparison.Diffs.Modified} ), No Change({fileComparison.Diffs.Identical} )";
                 var stringFiller = $"{new string(' ', prevLineSize)}\n";
 
                 foreach (var cmpr in fileComparison.LineComparison)
@@ -247,10 +261,19 @@ namespace Chizl.FileComparer
                     if (prevLineSize == 0) prevLineSize = 30;
                 }
 
-                // Colors works, but things like 'as' overwrites 'class' and this creates a problem.
-                ColourRrbText(OldAsciiContent);
-                ColourRrbText(NewAsciiContent);
+                // if using project test files, show as CS so that coloring of keywords will work for CSharp.
+                ColourRrbText(OldAsciiContent, OldAsciiFile.Text);
+                ColourRrbText(NewAsciiContent, NewAsciiFile.Text);
             }
+        }
+        private void OpenExplorerAndSelectFile(string filePath)
+        {
+            if (File.Exists(filePath))
+                // The /select parameter tells explorer.exe to open to the file's directory and select the specified file.
+                Process.Start("explorer.exe", $"/select,\"{filePath}\"");
+            else
+                // Handle the case where the file does not exist (e.g., log an error, show a message).
+                MessageBox.Show($"Error: File not found at '{filePath}'", About.Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
         }
     }
 }

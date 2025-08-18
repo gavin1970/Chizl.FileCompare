@@ -107,6 +107,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="compare.ico" />
+    <None Include="Resources\view_on.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

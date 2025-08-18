@@ -46,6 +46,7 @@ namespace Chizl.FileCompare
             ["Special"] = Color.FromArgb(190, 0, 0), // Dark Red
             ["ParameterModifiers"] = Color.FromArgb(255, 128, 0), // Dark Orange
             ["Additional"] = Color.FromArgb(255, 128, 0), // Dark Orange
+            ["Pragma"] = Color.FromArgb(132, 78, 41), // Brown
         };
 
         public static readonly Regex Keywords = new Regex(
@@ -63,7 +64,8 @@ namespace Chizl.FileCompare
                 @"(?<Literals>\b(null|true|false)\b)",
                 @"(?<Special>\b(base|this)\b)",
                 @"(?<ParameterModifiers>\b(params|ref|out)\b)",
-                @"(?<Additional>\b(file|lock|fixed)\b)"
+                @"(?<Additional>\b(file|lock|fixed|region|endregion)\b)",
+                @"(?<Pragma>(#region|#endregion|#if|#else|#endif))"
             }), RegexOptions.Compiled | RegexOptions.CultureInvariant
         );
     }

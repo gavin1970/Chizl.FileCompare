@@ -34,11 +34,13 @@
             this.Panel1 = new System.Windows.Forms.Panel();
             this.OldAsciiFile = new System.Windows.Forms.TextBox();
             this.Panel2 = new System.Windows.Forms.Panel();
+            this.OldAsciiViewButton = new System.Windows.Forms.Button();
             this.OldAsciiButton = new System.Windows.Forms.Button();
             this.NewAsciiContent = new System.Windows.Forms.RichTextBox();
             this.Panel3 = new System.Windows.Forms.Panel();
             this.NewAsciiFile = new System.Windows.Forms.TextBox();
             this.Panel4 = new System.Windows.Forms.Panel();
+            this.NewAsciiViewButton = new System.Windows.Forms.Button();
             this.NewAsciiButton = new System.Windows.Forms.Button();
             this.MenuStrip1 = new System.Windows.Forms.MenuStrip();
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -46,13 +48,17 @@
             this.ScoreThresholdDropdown = new System.Windows.Forms.ToolStripComboBox();
             this.StatusStrip1 = new System.Windows.Forms.StatusStrip();
             this.CompareButtonToollbar = new System.Windows.Forms.Button();
+            this.StatusText = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
             this.SplitContainer1.SuspendLayout();
             this.Panel1.SuspendLayout();
+            this.Panel2.SuspendLayout();
             this.Panel3.SuspendLayout();
+            this.Panel4.SuspendLayout();
             this.MenuStrip1.SuspendLayout();
+            this.StatusStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // OldAsciiContent
@@ -94,7 +100,6 @@
             // 
             this.Panel1.Controls.Add(this.OldAsciiFile);
             this.Panel1.Controls.Add(this.Panel2);
-            this.Panel1.Controls.Add(this.OldAsciiButton);
             this.Panel1.Dock = System.Windows.Forms.DockStyle.Top;
             this.Panel1.Location = new System.Drawing.Point(5, 5);
             this.Panel1.Name = "Panel1";
@@ -109,23 +114,38 @@
             this.OldAsciiFile.Location = new System.Drawing.Point(5, 5);
             this.OldAsciiFile.Name = "OldAsciiFile";
             this.OldAsciiFile.ReadOnly = true;
-            this.OldAsciiFile.Size = new System.Drawing.Size(593, 20);
+            this.OldAsciiFile.Size = new System.Drawing.Size(577, 20);
             this.OldAsciiFile.TabIndex = 1;
             // 
             // Panel2
             // 
+            this.Panel2.Controls.Add(this.OldAsciiViewButton);
+            this.Panel2.Controls.Add(this.OldAsciiButton);
             this.Panel2.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel2.Location = new System.Drawing.Point(598, 5);
+            this.Panel2.Location = new System.Drawing.Point(582, 5);
             this.Panel2.Name = "Panel2";
-            this.Panel2.Size = new System.Drawing.Size(13, 21);
+            this.Panel2.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.Panel2.Size = new System.Drawing.Size(50, 21);
             this.Panel2.TabIndex = 3;
+            // 
+            // OldAsciiViewButton
+            // 
+            this.OldAsciiViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.view_on;
+            this.OldAsciiViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.OldAsciiViewButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.OldAsciiViewButton.Location = new System.Drawing.Point(8, 0);
+            this.OldAsciiViewButton.Name = "OldAsciiViewButton";
+            this.OldAsciiViewButton.Size = new System.Drawing.Size(21, 21);
+            this.OldAsciiViewButton.TabIndex = 3;
+            this.OldAsciiViewButton.UseVisualStyleBackColor = true;
+            this.OldAsciiViewButton.Click += new System.EventHandler(this.OldAsciiViewButton_Click);
             // 
             // OldAsciiButton
             // 
             this.OldAsciiButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.AddButton_128x128;
             this.OldAsciiButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.OldAsciiButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldAsciiButton.Location = new System.Drawing.Point(611, 5);
+            this.OldAsciiButton.Location = new System.Drawing.Point(29, 0);
             this.OldAsciiButton.Name = "OldAsciiButton";
             this.OldAsciiButton.Size = new System.Drawing.Size(21, 21);
             this.OldAsciiButton.TabIndex = 2;
@@ -149,7 +169,6 @@
             // 
             this.Panel3.Controls.Add(this.NewAsciiFile);
             this.Panel3.Controls.Add(this.Panel4);
-            this.Panel3.Controls.Add(this.NewAsciiButton);
             this.Panel3.Dock = System.Windows.Forms.DockStyle.Top;
             this.Panel3.Location = new System.Drawing.Point(5, 5);
             this.Panel3.Name = "Panel3";
@@ -164,23 +183,38 @@
             this.NewAsciiFile.Location = new System.Drawing.Point(5, 5);
             this.NewAsciiFile.Name = "NewAsciiFile";
             this.NewAsciiFile.ReadOnly = true;
-            this.NewAsciiFile.Size = new System.Drawing.Size(565, 20);
+            this.NewAsciiFile.Size = new System.Drawing.Size(549, 20);
             this.NewAsciiFile.TabIndex = 1;
             // 
             // Panel4
             // 
+            this.Panel4.Controls.Add(this.NewAsciiViewButton);
+            this.Panel4.Controls.Add(this.NewAsciiButton);
             this.Panel4.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel4.Location = new System.Drawing.Point(570, 5);
+            this.Panel4.Location = new System.Drawing.Point(554, 5);
             this.Panel4.Name = "Panel4";
-            this.Panel4.Size = new System.Drawing.Size(13, 21);
+            this.Panel4.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
+            this.Panel4.Size = new System.Drawing.Size(50, 21);
             this.Panel4.TabIndex = 3;
+            // 
+            // NewAsciiViewButton
+            // 
+            this.NewAsciiViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.view_on;
+            this.NewAsciiViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.NewAsciiViewButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.NewAsciiViewButton.Location = new System.Drawing.Point(8, 0);
+            this.NewAsciiViewButton.Name = "NewAsciiViewButton";
+            this.NewAsciiViewButton.Size = new System.Drawing.Size(21, 21);
+            this.NewAsciiViewButton.TabIndex = 3;
+            this.NewAsciiViewButton.UseVisualStyleBackColor = true;
+            this.NewAsciiViewButton.Click += new System.EventHandler(this.NewAsciiViewButton_Click);
             // 
             // NewAsciiButton
             // 
             this.NewAsciiButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.AddButton_128x128;
             this.NewAsciiButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.NewAsciiButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.NewAsciiButton.Location = new System.Drawing.Point(583, 5);
+            this.NewAsciiButton.Location = new System.Drawing.Point(29, 0);
             this.NewAsciiButton.Name = "NewAsciiButton";
             this.NewAsciiButton.Size = new System.Drawing.Size(21, 21);
             this.NewAsciiButton.TabIndex = 2;
@@ -235,6 +269,8 @@
             // 
             // StatusStrip1
             // 
+            this.StatusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.StatusText});
             this.StatusStrip1.Location = new System.Drawing.Point(0, 668);
             this.StatusStrip1.Name = "StatusStrip1";
             this.StatusStrip1.Size = new System.Drawing.Size(1276, 22);
@@ -250,6 +286,14 @@
             this.CompareButtonToollbar.Text = "&Compare";
             this.CompareButtonToollbar.UseVisualStyleBackColor = true;
             this.CompareButtonToollbar.Click += new System.EventHandler(this.CompareButtonToollbar_Click);
+            // 
+            // StatusText
+            // 
+            this.StatusText.Name = "StatusText";
+            this.StatusText.Size = new System.Drawing.Size(1230, 17);
+            this.StatusText.Spring = true;
+            this.StatusText.Text = "Ready...";
+            this.StatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // StartForm
             // 
@@ -272,10 +316,14 @@
             this.SplitContainer1.ResumeLayout(false);
             this.Panel1.ResumeLayout(false);
             this.Panel1.PerformLayout();
+            this.Panel2.ResumeLayout(false);
             this.Panel3.ResumeLayout(false);
             this.Panel3.PerformLayout();
+            this.Panel4.ResumeLayout(false);
             this.MenuStrip1.ResumeLayout(false);
             this.MenuStrip1.PerformLayout();
+            this.StatusStrip1.ResumeLayout(false);
+            this.StatusStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -300,6 +348,9 @@
         private System.Windows.Forms.ToolStripMenuItem ToolStripMenuItem2;
         private System.Windows.Forms.ToolStripComboBox ScoreThresholdDropdown;
         private System.Windows.Forms.Button CompareButtonToollbar;
+        private System.Windows.Forms.Button OldAsciiViewButton;
+        private System.Windows.Forms.Button NewAsciiViewButton;
+        private System.Windows.Forms.ToolStripStatusLabel StatusText;
     }
 }
 
