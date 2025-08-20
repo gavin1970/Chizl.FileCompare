@@ -217,7 +217,18 @@ namespace Chizl.FileComparer
 
                 var prevLineSize = 30;
                 var fileComparison = DiffTool.CompareFiles(OldAsciiFile.Text, NewAsciiFile.Text, score_threshold);
-                StatusText.Text = $"Line by Line Status:  Added( {fileComparison.Diffs.Added} ), Deleted( {fileComparison.Diffs.Deleted} ), Modified( {fileComparison.Diffs.Modified} ), No Change({fileComparison.Diffs.Identical} )";
+
+                if (fileComparison.HasException)
+                {
+                    StatusText.Text = $"Error:  {fileComparison.Exception.Message}";
+                    StatusText.BackColor = Color.FromArgb(255, 192, 192);
+                }
+                else
+                {
+                    StatusText.Text = $"Line by Line Status:  Added( {fileComparison.Diffs.Added} ), Deleted( {fileComparison.Diffs.Deleted} ), Modified( {fileComparison.Diffs.Modified} ), No Change({fileComparison.Diffs.Identical} )";
+                    StatusText.BackColor = SystemColors.Control;
+                }
+
                 var stringFiller = $"{new string(' ', prevLineSize)}\n";
 
                 foreach (var cmpr in fileComparison.LineComparison)

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace Chizl.FileCompare
@@ -6,6 +7,12 @@ namespace Chizl.FileCompare
     public class FileComparison
     {
         private FileComparison() { IsEmpty = true; }
+        internal FileComparison(Exception ex) 
+        { 
+            HasException = true;
+            IsEmpty = true; 
+            Exception = ex; 
+        }
         internal FileComparison(List<CompareDiff> compareDiffs)
         {
             this.LineComparison = compareDiffs.ToArray();
@@ -18,10 +25,12 @@ namespace Chizl.FileCompare
         }
 
         public static FileComparison Empty { get; } = new FileComparison();
-        public bool IsEmpty { get; }
+        public bool IsEmpty { get; } = false;
+        public bool HasException { get; } = false;
 
-        public CompareDiff[] LineComparison { get; }
-        public Counts Diffs { get; }
+        public Exception Exception { get; } = new Exception();
+        public CompareDiff[] LineComparison { get; } = new CompareDiff[0];
+        public Counts Diffs { get; } = new Counts(0, 0, 0, 0);
 
         public class Counts
         {
@@ -32,10 +41,10 @@ namespace Chizl.FileCompare
                 Modified = modified;
                 Identical = identical;
             }
-            public int Added { get; }
-            public int Deleted { get; }
-            public int Modified { get; }
-            public int Identical { get; }
+            public int Added { get; } = 0;
+            public int Deleted { get; } = 0;
+            public int Modified { get; } = 0;
+            public int Identical { get; } = 0;
         }
     }
 }
