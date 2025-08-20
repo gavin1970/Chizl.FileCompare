@@ -2,9 +2,25 @@
 
   <PropertyGroup>
     <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-  </PropertyGroup>
+			<ImplicitUsings>disable</ImplicitUsings>
+			<Nullable>disable</Nullable>
+			<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+			<GenerateDocumentationFile>False</GenerateDocumentationFile>
+	</PropertyGroup>
 
-  <ItemGroup>
+		<PropertyGroup>
+				<Authors>Chizl</Authors>
+				<PackageId>Chizl.Chizl.FireCompare</PackageId>
+				<Company>Chizl.com</Company>
+				<Copyright>© 2025 chizl.com</Copyright>
+				<PackageTags>file-compare;library;in-console;on-desktop;netstandard;core;framework;no-deps</PackageTags>
+				<FileVersion>5.08.20.1333</FileVersion>
+				<Version>5.08.20.0</Version>
+				<AssemblyVersion>5.08.0.0</AssemblyVersion>
+		</PropertyGroup>
+
+
+		<ItemGroup>
     <Compile Remove="Chizl.FileComparerDemo\**" />
     <Compile Remove="Chizl.FileComparer\**" />
     <EmbeddedResource Remove="Chizl.FileComparerDemo\**" />

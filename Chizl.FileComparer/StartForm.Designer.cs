@@ -49,6 +49,8 @@
             this.StatusStrip1 = new System.Windows.Forms.StatusStrip();
             this.StatusText = new System.Windows.Forms.ToolStripStatusLabel();
             this.CompareButtonToollbar = new System.Windows.Forms.Button();
+            this.OldChangeColor = new System.Windows.Forms.Panel();
+            this.NewChangeColor = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -69,7 +71,7 @@
             this.OldAsciiContent.Name = "OldAsciiContent";
             this.OldAsciiContent.ReadOnly = true;
             this.OldAsciiContent.ShowSelectionMargin = true;
-            this.OldAsciiContent.Size = new System.Drawing.Size(637, 600);
+            this.OldAsciiContent.Size = new System.Drawing.Size(622, 600);
             this.OldAsciiContent.TabIndex = 0;
             this.OldAsciiContent.Text = "";
             this.OldAsciiContent.WordWrap = false;
@@ -83,12 +85,14 @@
             // SplitContainer1.Panel1
             // 
             this.SplitContainer1.Panel1.Controls.Add(this.OldAsciiContent);
+            this.SplitContainer1.Panel1.Controls.Add(this.OldChangeColor);
             this.SplitContainer1.Panel1.Controls.Add(this.Panel1);
             this.SplitContainer1.Panel1.Padding = new System.Windows.Forms.Padding(5);
             // 
             // SplitContainer1.Panel2
             // 
             this.SplitContainer1.Panel2.Controls.Add(this.NewAsciiContent);
+            this.SplitContainer1.Panel2.Controls.Add(this.NewChangeColor);
             this.SplitContainer1.Panel2.Controls.Add(this.Panel3);
             this.SplitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
             this.SplitContainer1.Size = new System.Drawing.Size(1276, 641);
@@ -156,11 +160,11 @@
             // 
             this.NewAsciiContent.Dock = System.Windows.Forms.DockStyle.Fill;
             this.NewAsciiContent.Font = new System.Drawing.Font("Courier New", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.NewAsciiContent.Location = new System.Drawing.Point(5, 36);
+            this.NewAsciiContent.Location = new System.Drawing.Point(20, 36);
             this.NewAsciiContent.Name = "NewAsciiContent";
             this.NewAsciiContent.ReadOnly = true;
             this.NewAsciiContent.ShowSelectionMargin = true;
-            this.NewAsciiContent.Size = new System.Drawing.Size(609, 600);
+            this.NewAsciiContent.Size = new System.Drawing.Size(594, 600);
             this.NewAsciiContent.TabIndex = 1;
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
@@ -295,6 +299,24 @@
             this.CompareButtonToollbar.UseVisualStyleBackColor = true;
             this.CompareButtonToollbar.Click += new System.EventHandler(this.CompareButtonToollbar_Click);
             // 
+            // OldChangeColor
+            // 
+            this.OldChangeColor.Dock = System.Windows.Forms.DockStyle.Right;
+            this.OldChangeColor.Location = new System.Drawing.Point(627, 36);
+            this.OldChangeColor.Name = "OldChangeColor";
+            this.OldChangeColor.Size = new System.Drawing.Size(15, 600);
+            this.OldChangeColor.TabIndex = 3;
+            this.OldChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
+            // 
+            // NewChangeColor
+            // 
+            this.NewChangeColor.Dock = System.Windows.Forms.DockStyle.Left;
+            this.NewChangeColor.Location = new System.Drawing.Point(5, 36);
+            this.NewChangeColor.Name = "NewChangeColor";
+            this.NewChangeColor.Size = new System.Drawing.Size(15, 600);
+            this.NewChangeColor.TabIndex = 4;
+            this.NewChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
+            // 
             // StartForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -351,6 +373,8 @@
         private System.Windows.Forms.Button OldAsciiViewButton;
         private System.Windows.Forms.Button NewAsciiViewButton;
         private System.Windows.Forms.ToolStripStatusLabel StatusText;
+        private System.Windows.Forms.Panel OldChangeColor;
+        private System.Windows.Forms.Panel NewChangeColor;
     }
 }
 

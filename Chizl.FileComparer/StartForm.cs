@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Chizl.Applications;
 using System.IO;
+using System.Collections.Generic;
 
 namespace Chizl.FileComparer
 {
@@ -20,6 +21,9 @@ namespace Chizl.FileComparer
         private readonly Color ADD_COLOR = Color.FromArgb(128, 255, 128);
         private readonly Color DELETE_COLOR = Color.FromArgb(255, 190, 190);
         private readonly Color MODIFIED_COLOR = Color.FromArgb(255, 255, 128);
+        private readonly static List<double> _addPerc = new List<double>();
+        private readonly static List<double> _delPerc = new List<double>();
+        private readonly static List<double> _modPerc = new List<double>();
 
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
@@ -38,6 +42,8 @@ namespace Chizl.FileComparer
 
         private void StartForm_Load(object sender, EventArgs e)
         {
+            this.DoubleBuffered = true;
+
             OldAsciiFile.Text = _oldFile;
             NewAsciiFile.Text = _newFile;
             ScoreThresholdDropdown.Text = "30%";
@@ -237,6 +243,32 @@ namespace Chizl.FileComparer
                 }
             }
         }
+        private void ChangeColor_Paint(object sender,  PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            var maxPerc = (double)e.ClipRectangle.Height;
+            var r = e.ClipRectangle.Width;
+            Pen addPen = new Pen(Color.Green, 1);
+            Pen delPen = new Pen(Color.Red, 1);
+            Pen modPen = new Pen(Color.Orange, 1);
+
+            foreach (var a in _addPerc)
+            {
+                var t = (float)(maxPerc * a);
+                g.DrawLine(addPen, 0, t, r, t);
+            }
+            foreach (var a in _delPerc)
+            {
+                var t = (float)(maxPerc * a);
+                g.DrawLine(delPen, 0, t, r, t);
+            }
+            foreach (var a in _modPerc)
+            {
+                var t = (float)(maxPerc * a);
+                g.DrawLine(modPen, 0, t, r, t);
+            }
+        }
+
         private void CompareFiles()
         {
             if (InvokeRequired)
@@ -276,9 +308,17 @@ namespace Chizl.FileComparer
                 }
 
                 var stringFiller = $"{new string(' ', prevLineSize)}\n";
+                var maxPerc = fileComparison.LineComparison.Length;
+                var line = 0;
+
+                _addPerc.Clear();
+                _delPerc.Clear();
+                _modPerc.Clear();
 
                 foreach (var cmpr in fileComparison.LineComparison)
                 {
+                    line++;
+
                     var lineNumber = $"{cmpr.LineNumber:000}: ";
                     var lineString = $"{cmpr.LineDiffStr}\n";
                     if (cmpr.LineDiffStr.Length == 0)
@@ -297,15 +337,18 @@ namespace Chizl.FileComparer
                     switch (cmpr.DiffType)
                     {
                         case DiffType.Added:
+                            _addPerc.Add((double)line / (double)maxPerc);
                             AddText(OldAsciiContent, stringFiller, ADD_COLOR);
                             AddText(NewAsciiContent, $"{cmpr.LineDiffStr}\n", ADD_COLOR);
                             break;
                         case DiffType.Deleted:
+                            _delPerc.Add((double)line / (double)maxPerc);
                             AddText(OldAsciiContent, lineString, DELETE_COLOR);
                             //AddText(NewAsciiContent, $"{new string(' ', cmpr.LineDiffStr.Length)}\n", DELETE_COLOR);
                             AddText(NewAsciiContent, "\n");
                             break;
                         case DiffType.Modified:
+                            _modPerc.Add((double)line / (double)maxPerc);
                             AddModifiedLine(OldAsciiContent, $"{cmpr.LineDiffStr}\n", false);
                             AddModifiedLine(NewAsciiContent, $"{cmpr.LineDiffStr}\n", true);
                             break;
@@ -321,7 +364,14 @@ namespace Chizl.FileComparer
                 // if using project test files, show as CS so that coloring of keywords will work for CSharp.
                 ColourRrbText(OldAsciiContent, OldAsciiFile.Text);
                 ColourRrbText(NewAsciiContent, NewAsciiFile.Text);
+
+                DiffColorScroll();
             }
+        }
+        private void DiffColorScroll()
+        {
+            this.OldChangeColor.Invalidate();
+            this.NewChangeColor.Invalidate();
         }
         private void OpenExplorerAndSelectFile(string filePath)
         {
