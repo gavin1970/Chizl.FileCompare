@@ -47,8 +47,8 @@
             this.ToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.ScoreThresholdDropdown = new System.Windows.Forms.ToolStripComboBox();
             this.StatusStrip1 = new System.Windows.Forms.StatusStrip();
-            this.CompareButtonToollbar = new System.Windows.Forms.Button();
             this.StatusText = new System.Windows.Forms.ToolStripStatusLabel();
+            this.CompareButtonToollbar = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -277,6 +277,14 @@
             this.StatusStrip1.TabIndex = 3;
             this.StatusStrip1.Text = "StatusStrip1";
             // 
+            // StatusText
+            // 
+            this.StatusText.Name = "StatusText";
+            this.StatusText.Size = new System.Drawing.Size(1261, 17);
+            this.StatusText.Spring = true;
+            this.StatusText.Text = "Ready...";
+            this.StatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            // 
             // CompareButtonToollbar
             // 
             this.CompareButtonToollbar.Location = new System.Drawing.Point(131, 1);
@@ -286,14 +294,6 @@
             this.CompareButtonToollbar.Text = "&Compare";
             this.CompareButtonToollbar.UseVisualStyleBackColor = true;
             this.CompareButtonToollbar.Click += new System.EventHandler(this.CompareButtonToollbar_Click);
-            // 
-            // StatusText
-            // 
-            this.StatusText.Name = "StatusText";
-            this.StatusText.Size = new System.Drawing.Size(1230, 17);
-            this.StatusText.Spring = true;
-            this.StatusText.Text = "Ready...";
-            this.StatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // StartForm
             // 

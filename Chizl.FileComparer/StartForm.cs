@@ -135,7 +135,51 @@ namespace Chizl.FileComparer
 
         private void AddModifiedLine(RichTextBox rb, string text, bool isNew)
         {
+            var charArray = text.ToCharArray();
+            char lastChar = '\0';
+            bool inAddDelete = false;
+            Color lastColor = MODIFIED_COLOR;
+
+            for(int i=0; i< charArray.Length;i++)
+            {
+                char thisChar = charArray[i];
+                char nextChar = i + 1 < charArray.Length ? charArray[i + 1] : '\0';
+
+                if (nextChar == '\0')
+                    Console.WriteLine("Wait, What!!!");
+
+                if (thisChar == '[' && nextChar == '+')
+                {
+                    inAddDelete = true;
+                    lastColor = ADD_COLOR;
+                    if (isNew)
+                        AddText(rb, $"{charArray[i + 2]}", lastColor);
+                    i += 2;
+                }
+                else if (thisChar == '[' && nextChar == '-')
+                {
+                    inAddDelete = true;
+                    lastColor = DELETE_COLOR;
+                    if (!isNew)
+                        AddText(rb, $"{charArray[i + 2]}", lastColor);
+                    i += 2;
+                }
+                else if (inAddDelete && thisChar == ']')
+                {
+                    inAddDelete = false;
+                    lastColor = MODIFIED_COLOR;
+                }
+                else
+                    AddText(rb, $"{thisChar}", lastColor);
+
+                lastChar = thisChar;
+            }
+        }
+        private void AddModifiedLineOld(RichTextBox rb, string text, bool isNew)
+        {
             var vText = text.Split('[');
+            if (text.Contains("LineComp"))
+                Debug.WriteLine("Wait...");
 
             foreach (var v in vText)
             {
@@ -158,6 +202,7 @@ namespace Chizl.FileComparer
                     AddText(rb, v, MODIFIED_COLOR);
             }
         }
+
         private void AddText(RichTextBox rb, string text) => AddText(rb, text, Color.Empty);
         private void AddText(RichTextBox rb, string text, Color color)
         {
@@ -165,6 +210,7 @@ namespace Chizl.FileComparer
             rb.SelectionBackColor = color.IsEmpty ? rb.BackColor : color;
             rb.AppendText(text);
         }
+
         private void ColourRrbText(RichTextBox rtb, string fullFilePath)
         {
             var ext = fullFilePath.ToLower().StartsWith(".\\testfiles\\test_") ? ".cs" : Path.GetExtension(OldAsciiFile.Text).ToLower();
