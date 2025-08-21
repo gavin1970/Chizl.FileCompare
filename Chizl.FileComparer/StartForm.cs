@@ -321,7 +321,7 @@ namespace Chizl.FileComparer
 
                     var lineNumber = $"{cmpr.LineNumber:000}: ";
                     var lineString = $"{cmpr.LineDiffStr}\n";
-                    if (cmpr.LineDiffStr.Length == 0)
+                    if (string.IsNullOrWhiteSpace(lineString))
                     {
                         stringFiller = $"{new string(' ', prevLineSize)}\n";
                         lineString = stringFiller;
@@ -339,25 +339,24 @@ namespace Chizl.FileComparer
                         case DiffType.Added:
                             _addPerc.Add((double)line / (double)maxPerc);
                             AddText(OldAsciiContent, stringFiller, ADD_COLOR);
-                            AddText(NewAsciiContent, $"{cmpr.LineDiffStr}\n", ADD_COLOR);
+                            AddText(NewAsciiContent, lineString, ADD_COLOR);
                             break;
                         case DiffType.Deleted:
                             _delPerc.Add((double)line / (double)maxPerc);
                             AddText(OldAsciiContent, lineString, DELETE_COLOR);
-                            //AddText(NewAsciiContent, $"{new string(' ', cmpr.LineDiffStr.Length)}\n", DELETE_COLOR);
-                            AddText(NewAsciiContent, "\n");
+                            AddText(NewAsciiContent, stringFiller, DELETE_COLOR);
                             break;
                         case DiffType.Modified:
                             _modPerc.Add((double)line / (double)maxPerc);
-                            AddModifiedLine(OldAsciiContent, $"{cmpr.LineDiffStr}\n", false);
-                            AddModifiedLine(NewAsciiContent, $"{cmpr.LineDiffStr}\n", true);
+                            AddModifiedLine(OldAsciiContent, lineString, false);
+                            AddModifiedLine(NewAsciiContent, lineString, true);
                             break;
                         default:
-                            AddText(OldAsciiContent, $"{cmpr.LineDiffStr}\n");
-                            AddText(NewAsciiContent, $"{cmpr.LineDiffStr}\n");
+                            AddText(OldAsciiContent, lineString);
+                            AddText(NewAsciiContent, lineString);
                             break;
                     }
-                    prevLineSize = cmpr.LineDiffStr.Length;
+                    prevLineSize = lineString.Length;
                     if (prevLineSize == 0) prevLineSize = 30;
                 }
 
