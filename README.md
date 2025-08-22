@@ -7,11 +7,17 @@
   * DLL Library: &lt;TargetFrameworks&gt;netstandard2.0;netstandard2.1&lt;/TargetFrameworks&gt;
   * EXE UI: .NET Framework 4.8.1
 
-To use the library it has 1 primary class with 3 static methods with the same return class class: `ComparisonResults`.
-* `DiffTool.CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
-* `DiffTool.CompareString(string srcText, string trgText);`
-* `CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
-The library builds a comparison between 2 files and returns a Class Model:
+To use the library it has 1 primary class `DiffTool` with 3 static methods with the same return model: `ComparisonResults`.
+* File Compare, passing file paths into each.
+    * `DiffTool.CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
+* String Compare, passing old string vs latest string.  Threshhold is auto set to 10% to ensure detail for a single line.
+    * `DiffTool.CompareString(string srcText, string trgText);`
+* String Array Compare, also used by File Compare above.
+    * `DiffTool.CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
+
+The library builds a comparison between 2 files, strings, or string array and returns this Class Model `ComparisonResults`.  It also allows a threshold and line look ahead option.
+* `Threshold` - Default and Suggested: 30%-60%.  This can be seen in the image above, within the Menu.  If the percentage is too low, you might get more detailed, but also can make 2 lines that are nothing alike might show merged, when it's really a deleted line and a new line added in it's place.  If the percentage is too high the line might say deleted with a new line instead of a modified line.  It really depends on your need.
+* `lineLookAhead` - Default and Suggested: 3.  Looking to far ahead might mix lines, or make modifications of 1 line look deleted with new lines been added.  To low and modifications might not be seen.
 ```csharp
     public class ComparisonResults
     {
