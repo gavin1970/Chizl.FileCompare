@@ -27,13 +27,11 @@ namespace Chizl.FileComparer
 
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
-        private bool _autoStartDiff = false;
 
         public StartForm(string[] args)
         {
             InitializeComponent();
 
-            _autoStartDiff = args.Length == 2;
             if (args.Length>0)
                 _oldFile = args[0];
             if (args.Length > 1)
@@ -44,18 +42,16 @@ namespace Chizl.FileComparer
         {
             this.DoubleBuffered = true;
 
-            OldAsciiFile.Text = _oldFile;
-            NewAsciiFile.Text = _newFile;
-            ScoreThresholdDropdown.Text = "30%";
+            this.OldAsciiFile.Text = _oldFile;
+            this.NewAsciiFile.Text = _newFile;
+            this.ScoreThresholdDropdown.Text = "30%";
+
             // hook up to the scroll handlers for the rich text boxes
             this.OldAsciiContent.VScroll += new EventHandler(this.RichText_VScroll);
             this.OldAsciiContent.HScroll += new EventHandler(this.RichText_HScroll);
             this.NewAsciiContent.VScroll += new EventHandler(this.RichText_VScroll);
             this.NewAsciiContent.HScroll += new EventHandler(this.RichText_HScroll);
             this.Text = About.TitleWithFileVersion;
-
-            if (_autoStartDiff)
-                Task.Run(async () => { await Task.Delay(1000); CompareFiles(); });
         }
         private void RichText_VScroll(object sender, EventArgs e)
         {

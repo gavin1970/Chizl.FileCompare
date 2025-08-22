@@ -31,12 +31,14 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StartForm));
             this.OldAsciiContent = new System.Windows.Forms.RichTextBox();
             this.SplitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.OldChangeColor = new System.Windows.Forms.Panel();
             this.Panel1 = new System.Windows.Forms.Panel();
             this.OldAsciiFile = new System.Windows.Forms.TextBox();
             this.Panel2 = new System.Windows.Forms.Panel();
             this.OldAsciiViewButton = new System.Windows.Forms.Button();
             this.OldAsciiButton = new System.Windows.Forms.Button();
             this.NewAsciiContent = new System.Windows.Forms.RichTextBox();
+            this.NewChangeColor = new System.Windows.Forms.Panel();
             this.Panel3 = new System.Windows.Forms.Panel();
             this.NewAsciiFile = new System.Windows.Forms.TextBox();
             this.Panel4 = new System.Windows.Forms.Panel();
@@ -49,8 +51,6 @@
             this.StatusStrip1 = new System.Windows.Forms.StatusStrip();
             this.StatusText = new System.Windows.Forms.ToolStripStatusLabel();
             this.CompareButtonToollbar = new System.Windows.Forms.Button();
-            this.OldChangeColor = new System.Windows.Forms.Panel();
-            this.NewChangeColor = new System.Windows.Forms.Panel();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -99,6 +99,15 @@
             this.SplitContainer1.SplitterDistance = 647;
             this.SplitContainer1.SplitterWidth = 10;
             this.SplitContainer1.TabIndex = 1;
+            // 
+            // OldChangeColor
+            // 
+            this.OldChangeColor.Dock = System.Windows.Forms.DockStyle.Right;
+            this.OldChangeColor.Location = new System.Drawing.Point(627, 36);
+            this.OldChangeColor.Name = "OldChangeColor";
+            this.OldChangeColor.Size = new System.Drawing.Size(15, 600);
+            this.OldChangeColor.TabIndex = 3;
+            this.OldChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
             // 
             // Panel1
             // 
@@ -168,6 +177,15 @@
             this.NewAsciiContent.TabIndex = 1;
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
+            // 
+            // NewChangeColor
+            // 
+            this.NewChangeColor.Dock = System.Windows.Forms.DockStyle.Left;
+            this.NewChangeColor.Location = new System.Drawing.Point(5, 36);
+            this.NewChangeColor.Name = "NewChangeColor";
+            this.NewChangeColor.Size = new System.Drawing.Size(15, 600);
+            this.NewChangeColor.TabIndex = 4;
+            this.NewChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
             // 
             // Panel3
             // 
@@ -298,24 +316,6 @@
             this.CompareButtonToollbar.Text = "&Compare";
             this.CompareButtonToollbar.UseVisualStyleBackColor = true;
             this.CompareButtonToollbar.Click += new System.EventHandler(this.CompareButtonToollbar_Click);
-            // 
-            // OldChangeColor
-            // 
-            this.OldChangeColor.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldChangeColor.Location = new System.Drawing.Point(627, 36);
-            this.OldChangeColor.Name = "OldChangeColor";
-            this.OldChangeColor.Size = new System.Drawing.Size(15, 600);
-            this.OldChangeColor.TabIndex = 3;
-            this.OldChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
-            // 
-            // NewChangeColor
-            // 
-            this.NewChangeColor.Dock = System.Windows.Forms.DockStyle.Left;
-            this.NewChangeColor.Location = new System.Drawing.Point(5, 36);
-            this.NewChangeColor.Name = "NewChangeColor";
-            this.NewChangeColor.Size = new System.Drawing.Size(15, 600);
-            this.NewChangeColor.TabIndex = 4;
-            this.NewChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
             // 
             // StartForm
             // 

@@ -1,0 +1,67 @@
+# name: Build, Test, Sign and Publish FileCompare
+# 
+# on:
+#   push:
+#     tags:
+#       - "v*"   # only run on version tags like v1.0.0
+#   workflow_dispatch:
+# 
+# jobs:
+#   build:
+#     runs-on: windows-latest
+# 
+#     steps:
+#       - name: Checkout repo
+#         uses: actions/checkout@v4
+# 
+#       - name: Setup .NET
+#         uses: actions/setup-dotnet@v4
+#         with:
+#           dotnet-version: "9.0.x"   # adjust if you target 6/8/9
+# 
+#       - name: Restore dependencies
+#         run: dotnet restore Chizl.FileCompare.sln
+# 
+#       - name: Build
+#         run: dotnet build Chizl.FileCompare.sln --configuration Release --no-restore
+# 
+#       - name: Run tests
+#         run: dotnet test Chizl.FileCompare.sln --no-build --verbosity normal
+# 
+#       # ------- (Optional) Code Signing -------
+#       - name: Decode certificate
+#         if: secrets.SIGNING_CERT != ''
+#         run: |
+#           echo "${{ secrets.SIGNING_CERT }}" | base64 -d > cert.pfx
+# 
+#       - name: Sign binaries
+#         if: secrets.SIGNING_CERT != ''
+#         run: |
+#           signtool sign ^
+#             /f cert.pfx ^
+#             /p "${{ secrets.SIGNING_PASSWORD }}" ^
+#             /tr http://timestamp.digicert.com ^
+#             /td sha256 ^
+#             /fd sha256 ^
+#             $(Get-ChildItem -Path . -Include *.exe,*.dll -Recurse | ForEach-Object { $_.FullName })
+# 
+#       # ------- Publish build output -------
+#       - name: Publish portable build
+#         run: dotnet publish src/Chizl.FileCompare/Chizl.FileCompare.csproj -c Release -r win-x64 --self-contained false -o publish
+# 
+#       - name: Archive build
+#         run: Compress-Archive -Path publish\* -DestinationPath FileCompare.zip
+# 
+#       - name: Upload build artifact
+#         uses: actions/upload-artifact@v4
+#         with:
+#           name: FileCompare
+#           path: FileCompare.zip
+# 
+#       # ------- Release to GitHub -------
+#       - name: Release
+#         uses: softprops/action-gh-release@v2
+#         with:
+#           files: FileCompare.zip
+#         env:
+#           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
