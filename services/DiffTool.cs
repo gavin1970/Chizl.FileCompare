@@ -20,19 +20,19 @@ namespace Chizl.FileCompare
         /// <param name="lineLookAhead">For multi line ascii files, how far ahead to look for possible matches?</param>
         /// <returns>
         /// File details and line by line comparison<br/>
-        /// Also can return FileComparison.HasException bool property where the FileComparison.Exception is the object in question.
+        /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
         /// </returns>
-        public static FileComparison CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)
+        public static ComparisonResults CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
             if (!File.Exists(sourceFile))
-                return new FileComparison(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found or accessible."));
+                return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found or accessible."));
             if (!File.Exists(targetFile))
-                return new FileComparison(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found or accessible."));
+                return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found or accessible."));
 
             if (IsBinyary(sourceFile))
-                return new FileComparison(new Exception($"'{sourceFile}' is a binary file."));
+                return new ComparisonResults(new Exception($"'{sourceFile}' is a binary file."));
             else if (IsBinyary(sourceFile))
-                return new FileComparison(new Exception($"'{targetFile}' is a binary file."));
+                return new ComparisonResults(new Exception($"'{targetFile}' is a binary file."));
             else
             {
                 var linesOld = File.ReadAllLines(sourceFile);
@@ -57,9 +57,9 @@ namespace Chizl.FileCompare
         /// <param name="trgText">Newier string to compare</param>
         /// <returns>
         /// File details and byte by comparison<br/>
-        /// Also can return FileComparison.HasException bool property where the FileComparison.Exception is the object in question.
+        /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
         /// </returns>
-        public static FileComparison CompareString(string srcText, string trgText) =>
+        public static ComparisonResults CompareString(string srcText, string trgText) =>
             CompareStringArr(new string[] { srcText }, new string[] { trgText }, .10);
         /// <summary>
         /// Compare two ascii string arrays and return line for line what was added, removed, and modified.<br/>
@@ -72,9 +72,9 @@ namespace Chizl.FileCompare
         /// <param name="lineLookAhead">For the array list, how far ahead to look for possible matches?</param>
         /// <returns>
         /// File details and line by line comparison<br/>
-        /// Also can return FileComparison.HasException bool property where the FileComparison.Exception is the object in question.
+        /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
         /// </returns>
-        public static FileComparison CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3)
+        public static ComparisonResults CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
             var retVal = new List<CompareDiff>();
             var lineNo = 0;
@@ -111,7 +111,7 @@ namespace Chizl.FileCompare
                 retVal.Add(new CompareDiff(diffType, lineNo, entry.Text));
             }
 
-            return new FileComparison(retVal);
+            return new ComparisonResults(retVal);
 
         }
         private static int[,] BuildLcsTable(string[] a, string[] b)

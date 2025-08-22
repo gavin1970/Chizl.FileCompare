@@ -4,16 +4,16 @@ using System.Linq;
 
 namespace Chizl.FileCompare
 {
-    public class FileComparison
+    public class ComparisonResults
     {
-        private FileComparison() { IsEmpty = true; }
-        internal FileComparison(Exception ex) 
+        private ComparisonResults() { IsEmpty = true; }
+        internal ComparisonResults(Exception ex) 
         { 
             HasException = true;
             IsEmpty = true; 
             Exception = ex; 
         }
-        internal FileComparison(List<CompareDiff> compareDiffs)
+        internal ComparisonResults(List<CompareDiff> compareDiffs)
         {
             this.LineComparison = compareDiffs.ToArray();
             this.Diffs = new Counts(
@@ -24,7 +24,7 @@ namespace Chizl.FileCompare
             );
         }
 
-        public static FileComparison Empty { get; } = new FileComparison();
+        public static ComparisonResults Empty { get; } = new ComparisonResults();
         public bool IsEmpty { get; } = false;
         public bool HasException { get; } = false;
 

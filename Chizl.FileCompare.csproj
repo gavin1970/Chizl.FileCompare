@@ -1,16 +1,16 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
-			<ImplicitUsings>disable</ImplicitUsings>
-			<Nullable>disable</Nullable>
-			<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
-			<GenerateDocumentationFile>False</GenerateDocumentationFile>
-	</PropertyGroup>
+		<PropertyGroup>
+				<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+				<ImplicitUsings>disable</ImplicitUsings>
+				<Nullable>disable</Nullable>
+				<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
+				<GenerateDocumentationFile>False</GenerateDocumentationFile>
+		</PropertyGroup>
 
 		<PropertyGroup>
 				<Authors>Chizl</Authors>
-				<PackageId>Chizl.Chizl.FireCompare</PackageId>
+				<PackageId>Chizl.FileCompare</PackageId>
 				<Company>Chizl.com</Company>
 				<Copyright>© 2025 chizl.com</Copyright>
 				<PackageTags>file-compare;library;in-console;on-desktop;netstandard;core;framework;no-deps</PackageTags>
@@ -19,14 +19,10 @@
 				<AssemblyVersion>5.08.0.0</AssemblyVersion>
 		</PropertyGroup>
 
-
 		<ItemGroup>
-    <Compile Remove="Chizl.FileComparerDemo\**" />
-    <Compile Remove="Chizl.FileComparer\**" />
-    <EmbeddedResource Remove="Chizl.FileComparerDemo\**" />
-    <EmbeddedResource Remove="Chizl.FileComparer\**" />
-    <None Remove="Chizl.FileComparerDemo\**" />
-    <None Remove="Chizl.FileComparer\**" />
-  </ItemGroup>
+				<Compile Remove="Chizl.FileComparer\**" />
+				<EmbeddedResource Remove="Chizl.FileComparer\**" />
+				<None Remove="Chizl.FileComparer\**" />
+		</ItemGroup>
 
 </Project>

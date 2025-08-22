@@ -6,7 +6,6 @@ namespace Chizl.FileCompare
     public class CompareDiff
     {
         static readonly Encoding _defaultEncoding = Encoding.UTF8;
-        private string _lineDiffStr = string.Empty;
 
         private CompareDiff() {}
         private CompareDiff(DiffType diff, int line, Encoding enc)
@@ -27,9 +26,6 @@ namespace Chizl.FileCompare
             LineDiffBytes = diffArray;
             if (diffArray != null)
                 LineDiffStr = EncodeType.GetString(diffArray);
-
-            if (diff != DiffType.None)
-                SetStringDiff();
         }
 
         internal CompareDiff(DiffType diff, int line, string diffStr) : this(diff, line, _defaultEncoding, diffStr) { }
@@ -38,43 +34,6 @@ namespace Chizl.FileCompare
             LineDiffStr = diffStr;
             if (!string.IsNullOrWhiteSpace(diffStr))
                 LineDiffBytes = EncodeType.GetBytes(diffStr);
-
-            if (diff != DiffType.None)
-                SetStringDiff();
-        }
-
-        /// <summary>
-        /// TODO: Not ready..
-        /// </summary>
-        private void SetStringDiff()
-        {
-            //var charDiff = new List<CharDiff>();
-
-            //var a = LineDiffStr.IndexOf("[+");
-            //var d = LineDiffStr.IndexOf("[-");
-            //var e = 0;
-
-            //while (a > -1 || d > -1)
-            //{
-
-            //    e = LineDiffStr.IndexOf("]", e);
-
-            //    if (a > d)
-            //    {
-            //        a += 2;
-            //        charDiff.Add(new CharDiff(DiffType.Added, LineDiffStr[a]));
-            //        a++;
-            //    }
-            //    else
-            //    {
-            //        d += 2;
-            //        charDiff.Add(new CharDiff(DiffType.Deleted, LineDiffStr[d]));
-            //        d++;
-            //    }
-
-            //    a = LineDiffStr.IndexOf("[+", a + 1);
-            //    d = LineDiffStr.IndexOf("[-", d + 1);
-            //}
         }
 
         public static CharDiff[] LineBreakDown { get; } = new CharDiff[0];
