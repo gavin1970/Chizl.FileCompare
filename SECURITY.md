@@ -23,6 +23,6 @@ if $(ConfigurationName) == Release (
 | 5.8.x   | :white_check_mark: |
 | < 5.8   | :x:                |
 
-## Reporting a Vulnerability
+## Reporting a Vulnerability or an Issue
 
-Until which time I get a issue process up and working, open a discussion and I can work from there.
+Go to <a href="https://github.com/gavin1970/Chizl.FileCompare/issues">Issues</a> in the top menu and post the issue and be as detailed as you can to reproduce it.
