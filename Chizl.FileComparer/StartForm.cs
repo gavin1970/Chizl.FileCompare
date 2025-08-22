@@ -138,77 +138,28 @@ namespace Chizl.FileComparer
         private void CompareButtonToollbar_Click(object sender, EventArgs e) => CompareFiles();
         private void OldAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(OldAsciiFile.Text);
         private void NewAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(NewAsciiFile.Text);
-
-        private void AddModifiedLine(RichTextBox rb, string text, bool isNew)
+        private void AddModifiedLine(RichTextBox rb, CharDiff[] charDiff, bool isNew)
         {
-            var charArray = text.ToCharArray();
-            char lastChar = '\0';
-            bool inAddDelete = false;
-            Color lastColor = MODIFIED_COLOR;
-
-            for(int i=0; i< charArray.Length;i++)
+            foreach(var cd in charDiff)
             {
-                char thisChar = charArray[i];
-                char nextChar = i + 1 < charArray.Length ? charArray[i + 1] : '\0';
-
-                if (nextChar == '\0')
-                    Console.WriteLine("Wait, What!!!");
-
-                if (thisChar == '[' && nextChar == '+')
+                switch(cd.DiffType)
                 {
-                    inAddDelete = true;
-                    lastColor = ADD_COLOR;
-                    if (isNew)
-                        AddText(rb, $"{charArray[i + 2]}", lastColor);
-                    i += 2;
+                    case DiffType.Added:
+                        if (isNew)
+                            AddText(rb, $"{cd.Char}", ADD_COLOR); 
+                        break;
+                    case DiffType.Deleted:
+                        if (!isNew)
+                            AddText(rb, $"{cd.Char}", DELETE_COLOR);
+                        break;
+                    case DiffType.Modified:
+                    default:
+                        AddText(rb, $"{cd.Char}", MODIFIED_COLOR);
+                        break;
                 }
-                else if (thisChar == '[' && nextChar == '-')
-                {
-                    inAddDelete = true;
-                    lastColor = DELETE_COLOR;
-                    if (!isNew)
-                        AddText(rb, $"{charArray[i + 2]}", lastColor);
-                    i += 2;
-                }
-                else if (inAddDelete && thisChar == ']')
-                {
-                    inAddDelete = false;
-                    lastColor = MODIFIED_COLOR;
-                }
-                else
-                    AddText(rb, $"{thisChar}", lastColor);
-
-                lastChar = thisChar;
             }
+            AddText(rb, $"\n", MODIFIED_COLOR);
         }
-        private void AddModifiedLineOld(RichTextBox rb, string text, bool isNew)
-        {
-            var vText = text.Split('[');
-            if (text.Contains("LineComp"))
-                Debug.WriteLine("Wait...");
-
-            foreach (var v in vText)
-            {
-                int iE = v.IndexOf("]");
-                if (iE > -1 && iE == 2 && v.Substring(0, 1).Equals("+"))
-                {
-                    if (isNew)
-                        AddText(rb, v.Substring(1, iE - 1), ADD_COLOR);
-                    if (v.Length > 3)
-                        AddText(rb, v.Substring(3), MODIFIED_COLOR);
-                }
-                else if (iE > -1 && iE == 2 && v.Substring(0, 1).Equals("-"))
-                {
-                    if (!isNew)
-                        AddText(rb, v.Substring(1, iE - 1), DELETE_COLOR);
-                    if (v.Length > 3)
-                        AddText(rb, v.Substring(3), MODIFIED_COLOR);
-                }
-                else
-                    AddText(rb, v, MODIFIED_COLOR);
-            }
-        }
-
         private void AddText(RichTextBox rb, string text) => AddText(rb, text, Color.Empty);
         private void AddText(RichTextBox rb, string text, Color color)
         {
@@ -348,8 +299,8 @@ namespace Chizl.FileComparer
                             break;
                         case DiffType.Modified:
                             _modPerc.Add((double)line / (double)maxPerc);
-                            AddModifiedLine(OldAsciiContent, lineString, false);
-                            AddModifiedLine(NewAsciiContent, lineString, true);
+                            AddModifiedLine(OldAsciiContent, cmpr.LineBreakDown, false);
+                            AddModifiedLine(NewAsciiContent, cmpr.LineBreakDown, true);
                             break;
                         default:
                             AddText(OldAsciiContent, lineString);

@@ -14,8 +14,8 @@
 				<Company>Chizl.com</Company>
 				<Copyright>© 2025 chizl.com</Copyright>
 				<PackageTags>file-compare;library;in-console;on-desktop;netstandard;core;framework;no-deps</PackageTags>
-				<FileVersion>5.08.21.1130</FileVersion>
-				<Version>5.08.21.0</Version>
+				<FileVersion>5.08.22.1220</FileVersion>
+				<Version>5.08.22.0</Version>
 				<AssemblyVersion>5.08.0.0</AssemblyVersion>
 		</PropertyGroup>
 
