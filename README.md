@@ -7,10 +7,10 @@
   * DLL Library: &lt;TargetFrameworks&gt;netstandard2.0;netstandard2.1&lt;/TargetFrameworks&gt;
   * EXE UI: .NET Framework 4.8.1
 
-To use the library it has 1 primary class with 3 static methods.
-* `ComparisonResults fileComp = DiffTool.CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
-* `ComparisonResults fileComp = DiffTool.CompareString(string srcText, string trgText);`
-* `ComparisonResults fileComp = CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
+To use the library it has 1 primary class with 3 static methods with the same return class class: `ComparisonResults`.
+* `DiffTool.CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
+* `DiffTool.CompareString(string srcText, string trgText);`
+* `CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3);`
 The library builds a comparison between 2 files and returns a Class Model:
 ```csharp
     public class ComparisonResults
