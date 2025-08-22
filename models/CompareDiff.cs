@@ -37,8 +37,6 @@ namespace Chizl.FileCompare
             LineDiffStr = diffStr;
             if (!string.IsNullOrWhiteSpace(diffStr))
                 LineDiffBytes = EncodeType.GetBytes(diffStr);
-
-            SetStringDiff();
         }
 
         /// <summary>
