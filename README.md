@@ -66,9 +66,28 @@ The library builds a comparison between 2 files, strings, or string array and re
 
 The property `LineComparison` returns a line by line array for side by side look for users that want to build their own UI.<br/>
 
-Model `CompareDiff` has `LineDiffBytes`, that breaks down a line by character when modified, as seen on Line 8 of the above image.<br/>
-Example: `this is a test` <--> `that was a test`<br/>
-Results: `th[-i][+a][-s][+t] [-i][+w][+a]s a test`
+Model `CompareDiff` has `LineDiffBytes`, that breaks down a line by character when modified, as seen on Line 8 of the above image.<br/><br/>
+Example: `this is a test` <--> `that was a test`
+* CompareDiff.LineDiffString: `th[-i][+a][-s][+t] [-i][+w][+a]s a test`
+* CompareDiff.LineBreakdown: (Will look cleaner)
+    * `t` ~ CharDiff.DiffType.Modified
+    * `h` ~ CharDiff.DiffType.Modified
+    * `i` ~ CharDiff.DiffType.Deleted
+    * `a` ~ CharDiff.DiffType.Added
+    * `s` ~ CharDiff.DiffType.Deleted
+    * `t` ~ CharDiff.DiffType.Added
+    * ` ` ~ CharDiff.DiffType.Modified
+    * `i` ~ CharDiff.DiffType.Deleted
+    * `w` ~ CharDiff.DiffType.Added
+    * `a` ~ CharDiff.DiffType.Added
+    * `s` ~ CharDiff.DiffType.Modified
+    * ` ` ~ CharDiff.DiffType.Modified
+    * `a` ~ CharDiff.DiffType.Modified
+    * ` ` ~ CharDiff.DiffType.Modified
+    * `t` ~ CharDiff.DiffType.Modified
+    * `e` ~ CharDiff.DiffType.Modified
+    * `s` ~ CharDiff.DiffType.Modified
+    * `t` ~ CharDiff.DiffType.Modified
 ```csharp
     public class CompareDiff
     {
@@ -103,12 +122,15 @@ Results: `th[-i][+a][-s][+t] [-i][+w][+a]s a test`
                 LineDiffBytes = EncodeType.GetBytes(diffStr);
         }
 
-        public static CharDiff[] LineBreakDown { get; } = new CharDiff[0];
         /// <summary>
         /// Create an empty Model.  IsEmpty will be set to True.
         /// </summary>
         public static CompareDiff Empty { get; } = new CompareDiff();
-        
+        /// <summary>
+        /// LineBreakDown is used for Modified lines and will be empty for New, Deleted, or unmodified lines.<br/>
+        /// This is the help translate modified lines in a more structured manner.
+        /// </summary>
+        public CharDiff[] LineBreakDown { get { return SetStringDiff(); } }
         /// <summary>
         /// If CompareDiff wasn't intialized, True will be returned.
         /// </summary>
@@ -134,5 +156,55 @@ Results: `th[-i][+a][-s][+t] [-i][+w][+a]s a test`
         /// Default: UTF8
         /// </summary>
         public Encoding EncodeType { get; } = _defaultEncoding;
+
+        /// <summary>
+        /// TODO: Not ready..
+        /// </summary>
+        private CharDiff[] SetStringDiff()
+        {
+            if(!this.DiffType.Equals(DiffType.Modified))
+                return new CharDiff[0];
+
+            var charArray = LineDiffStr.ToCharArray();
+            var charList = new List<CharDiff>();
+
+            for (int i = 0; i < charArray.Length; i++)
+            {
+                char thisChar = charArray[i];
+                char nextChar = i + 1 < charArray.Length ? charArray[i + 1] : '\0';
+                char endMod = i + 3 < charArray.Length ? charArray[i + 3] : '\0';
+
+                if (thisChar == '[' && nextChar == '+' && endMod == ']')
+                {
+                    i += 2;
+                    charList.Add(new CharDiff(DiffType.Added, charArray[i]));
+                    i++;    //skip end Mod
+                }
+                else if (thisChar == '[' && nextChar == '-' && endMod == ']')
+                {
+                    i += 2;
+                    charList.Add(new CharDiff(DiffType.Deleted, charArray[i]));
+                    i++;    //skip end Mod
+                }
+                else
+                    charList.Add(new CharDiff(DiffType.Modified, thisChar));
+            }
+
+            return charList.ToArray();
+        }
+    }
+```
+
+```csharp
+    public class CharDiff
+    {
+        public CharDiff(DiffType diff, char lineChar)
+        {
+            this.DiffType = diff;
+            this.Char = lineChar;
+        }
+
+        public DiffType DiffType { get; } = DiffType.NotSet;
+        public char Char { get; } = '\0';
     }
 ```

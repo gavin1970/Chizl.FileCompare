@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Drawing;
 using System.Text;
-using static System.Net.Mime.MediaTypeNames;
+using System.Collections.Generic;
 
 namespace Chizl.FileCompare
 {
@@ -43,7 +41,6 @@ namespace Chizl.FileCompare
         /// Create an empty Model.  IsEmpty will be set to True.
         /// </summary>
         public static CompareDiff Empty { get; } = new CompareDiff();
-
         /// <summary>
         /// LineBreakDown is used for Modified lines and will be empty for New, Deleted, or unmodified lines.<br/>
         /// This is the help translate modified lines in a more structured manner.
