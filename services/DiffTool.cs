@@ -1,9 +1,8 @@
 ﻿using System;
 using System.IO;
+using System.Text;
 using System.Linq;
 using System.Collections.Generic;
-using static System.Net.Mime.MediaTypeNames;
-using System.Diagnostics;
 
 namespace Chizl.FileCompare
 {
@@ -29,16 +28,33 @@ namespace Chizl.FileCompare
             if (!File.Exists(targetFile))
                 return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found or accessible."));
 
-            if (IsBinyary(sourceFile))
-                return new ComparisonResults(new Exception($"'{sourceFile}' is a binary file."));
-            else if (IsBinyary(sourceFile))
-                return new ComparisonResults(new Exception($"'{targetFile}' is a binary file."));
+            var isSrcBinary = IsBinary(sourceFile, out string errMsg);
+            if (!string.IsNullOrWhiteSpace(errMsg))
+                return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
+
+            var isTrgBinary = IsBinary(targetFile, out errMsg);
+            if (!string.IsNullOrWhiteSpace(errMsg))
+                return new ComparisonResults(new Exception($"{nameof(targetFile)}: {errMsg}"));
+
+            string[] linesOld;
+            string[] linesNew;
+
+            //if one of them is binary, view them both as binary else both as ascii.
+            if (isSrcBinary || isTrgBinary)
+            {
+                if (!LoadBinary(sourceFile, out linesOld, out errMsg))
+                    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
+
+                if (!LoadBinary(targetFile, out linesNew, out errMsg))
+                    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
+            }
             else
             {
-                var linesOld = File.ReadAllLines(sourceFile);
-                var linesNew = File.ReadAllLines(targetFile);
-                return CompareStringArr(linesOld, linesNew, scoreThreshold, lineLookAhead);
+                linesOld = File.ReadAllLines(sourceFile);
+                linesNew = File.ReadAllLines(targetFile);
             }
+
+            return CompareStringArr(linesOld, linesNew, scoreThreshold, lineLookAhead);
         }
         /// <summary>
         /// Compare two ascii strings and return line for line what was added, removed, and modified.<br/>
@@ -219,22 +235,105 @@ namespace Chizl.FileCompare
             }
             return "";
         }
-        private static bool IsBinyary(string fullPath)
+        /// <summary>
+        /// Used LINQ.Where().Count()>1 originally, but it's scans the 
+        /// whole buffer while looping is a few milliseconds faster.
+        /// </summary>
+        private static bool IsBinary(string fullPath, out string errorMsg)
         {
-            var maxRead = 1024;
-            var buffer = new byte[maxRead];
+            const int CharsToCheck = 1024;
+            int nullCount = 0;
+            errorMsg = string.Empty;
 
-            using (var strm = File.OpenRead(fullPath))
+            try
             {
-                if (strm.Length < maxRead)
-                    maxRead = (int)strm.Length;
+                using (var fs = File.OpenRead(fullPath))
+                {
+                    byte[] buffer = new byte[CharsToCheck];
+                    int bytesRead = fs.Read(buffer, 0, CharsToCheck);
 
-                strm.Read(buffer, 0, maxRead);
-                if (buffer.Where(c => c == '\0').Count() > 0)
-                    return true;
+                    for (int i = 0; i < bytesRead; i++)
+                    {
+                        if (buffer[i] == '\0')
+                        {
+                            nullCount++;
+                            // There are malformed ascii text files with 1 terminator.  So we look for 2.
+                            if (nullCount > 1)
+                                return true; // Found more than one null, most definitely binary
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMsg = $"IsBinary('{fullPath}') Exception:\n{ex.Message}";
             }
 
-            return false;
+            return false; // Found one or less null, likely text
+        }
+        /// <summary>
+        /// Load files as binary, then convert to string hex format for side by side view of next binary load file.
+        /// </summary>
+        /// <param name="fullPath"></param>
+        /// <param name="returnArr"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns></returns>
+        private static bool LoadBinary(string fullPath, out string[] returnArr, out string errorMsg)
+        {
+            var retVal = true;
+            var returnList = new List<string>();
+            returnArr = new string[0] { };
+            errorMsg = string.Empty;
+
+            try
+            {
+                throw new Exception("Binary files are not supported yet.\nLCS Approach causes OutOfMemoryException for binaries.");
+
+                using (FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read))
+                {
+                    int bytesRead;
+                    byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
+                    int offset = 0;
+
+                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        var sb = new StringBuilder();
+
+                        // Display offset
+                        sb.Append($"{offset:X8}: ");
+
+                        // Display hex values
+                        for (int i = 0; i < bytesRead; i++)
+                            sb.Append($"{buffer[i]:X2} ");
+
+                        // Pad if less than 16 bytes were read in the last chunk
+                        for (int i = bytesRead; i < buffer.Length; i++)
+                            sb.Append("   "); // Three spaces for padding
+
+                        sb.Append("  "); // Separator between hex and ASCII
+
+                        // Display ASCII representation (printable characters)
+                        for (int i = 0; i < bytesRead; i++)
+                        {
+                            char c = (char)buffer[i];
+                            if (char.IsControl(c) || char.IsWhiteSpace(c) && c != ' ')
+                                sb.Append("."); // Represent non-printable characters as a dot
+                            else
+                                sb.Append(c);
+                        }
+                        sb.AppendLine();
+                        returnList.Add(sb.ToString());
+                        offset += bytesRead;
+                    }
+                }
+                returnArr = returnList.ToArray();
+            }
+            catch (Exception ex)
+            {
+                errorMsg = $"LoadBinary('{fullPath}'):\n{ex.Message}";
+                retVal = false;
+            }
+            return retVal;
         }
     }
 }
