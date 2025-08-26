@@ -1,15 +1,14 @@
 ﻿using System;
+using System.IO;
 using System.Drawing;
 using Chizl.FileCompare;
-using System.Windows.Forms;
-using Chizl.FileComparer.utils;
-using System.Runtime.InteropServices;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using System.Diagnostics;
 using Chizl.Applications;
-using System.IO;
+using System.Windows.Forms;
+using Chizl.FileComparer.utils;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Chizl.FileComparer
 {
@@ -21,6 +20,11 @@ namespace Chizl.FileComparer
         private readonly Color ADD_COLOR = Color.FromArgb(128, 255, 128);
         private readonly Color DELETE_COLOR = Color.FromArgb(255, 190, 190);
         private readonly Color MODIFIED_COLOR = Color.FromArgb(255, 255, 128);
+        private readonly Color BACK_COLOR = Color.Empty;
+        private readonly Color OFFSET_COLOR = Color.FromArgb(255, 0, 0);
+        private readonly Color HEX_COLOR = Color.FromArgb(0, 128, 0);
+        private readonly Color PRINTABLE_COLOR = Color.FromArgb(0, 0, 255);
+        
         private readonly static List<double> _addPerc = new List<double>();
         private readonly static List<double> _delPerc = new List<double>();
         private readonly static List<double> _modPerc = new List<double>();
@@ -75,51 +79,6 @@ namespace Chizl.FileComparer
                 ApplyScroll(senderRtb, targetRtb, ScrollBarDirection.SB_HORZ);
             }
         }
-        private void ApplyScroll(RichTextBox Source, RichTextBox Target, ScrollBarDirection Direction)
-        {
-            // unhook target from relevant event, otherwise we end up in an infinite loop!
-            switch (Direction)
-            {
-                case ScrollBarDirection.SB_VERT:
-                    Target.VScroll -= RichText_VScroll;
-                    break;
-                case ScrollBarDirection.SB_HORZ:
-                    Target.HScroll -= RichText_HScroll;
-                    break;
-            }
-
-            IntPtr ptrLparam = new IntPtr(0);
-            IntPtr ptrWparam;
-
-            // Prepare scroll info struct
-            SCROLLINFO si = new SCROLLINFO();
-            si.cbSize = (uint)Marshal.SizeOf(si);
-            si.fMask = (uint)ScrollInfoMask.SIF_ALL;
-
-            // Get current scroller posion
-            ExternApi.GetScrollInfo(Source.Handle, (int)Direction, ref si);
-
-            // if we're tracking, set target to current track position
-            if ((si.nTrackPos > 0) || ((si.nTrackPos == 0) && (si.nPos != 0)))
-                si.nPos = si.nTrackPos;
-
-            // Reposition scroller
-            ExternApi.SetScrollInfo(Target.Handle, (int)Direction, ref si, true);
-            ptrWparam = new IntPtr(ExternApi.SB_THUMBTRACK + 0x10000 * si.nPos);
-
-            // send the relevant message to the target control, and rehook the event
-            switch (Direction)
-            {
-                case ScrollBarDirection.SB_VERT:
-                    ExternApi.SendMessage(Target.Handle, ExternApi.WM_VSCROLL, ptrWparam, ptrLparam);
-                    Target.VScroll += new EventHandler(this.RichText_VScroll);
-                    break;
-                case ScrollBarDirection.SB_HORZ:
-                    ExternApi.SendMessage(Target.Handle, ExternApi.WM_HSCROLL, ptrWparam, ptrLparam);
-                    Target.HScroll += new EventHandler(this.RichText_HScroll);
-                    break;
-            }
-        }
         private void ToolStripMenuItem2_Click(object sender, EventArgs e)=> this.Close();
         private void OldAsciiButton_Click(object sender, EventArgs e)
         {
@@ -134,6 +93,46 @@ namespace Chizl.FileComparer
         private void CompareButtonToollbar_Click(object sender, EventArgs e) => CompareFiles();
         private void OldAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(OldAsciiFile.Text);
         private void NewAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(NewAsciiFile.Text);
+        private void OldBinaryViewButton_Click(object sender, EventArgs e) => LoadBinaryHexView(OldAsciiFile.Text, OldAsciiContent);
+        private void NewBinaryViewButton_Click(object sender, EventArgs e) => LoadBinaryHexView(NewAsciiFile.Text, NewAsciiContent);
+        private void AsciiContent_Resize(object sender, EventArgs e)
+        {
+            //RichTextBox rtb = (RichTextBox)sender;
+            //if (string.IsNullOrWhiteSpace(rtb.Text) || (!string.IsNullOrWhiteSpace(rtb.Text) && !rtb.Text.StartsWith("00000000:")))
+            //{
+            //    rtb.Font = new Font(rtb.Font.FontFamily, 8.25f);
+            //    return;
+            //}
+
+            //rtb.Font = new Font(rtb.Font.FontFamily, 6.25f);
+            //SetCurrentFontSize(rtb);
+        }
+        private void ChangeColor_Paint(object sender, PaintEventArgs e)
+        {
+            var g = e.Graphics;
+            var maxPerc = (double)e.ClipRectangle.Height;
+            var r = e.ClipRectangle.Width;
+            Pen addPen = new Pen(Color.Green, 1);
+            Pen delPen = new Pen(Color.Red, 1);
+            Pen modPen = new Pen(Color.Orange, 1);
+
+            foreach (var a in _addPerc)
+            {
+                var t = (float)(maxPerc * a);
+                g.DrawLine(addPen, 0, t, r, t);
+            }
+            foreach (var a in _delPerc)
+            {
+                var t = (float)(maxPerc * a);
+                g.DrawLine(delPen, 0, t, r, t);
+            }
+            foreach (var a in _modPerc)
+            {
+                var t = (float)(maxPerc * a);
+                g.DrawLine(modPen, 0, t, r, t);
+            }
+        }
+
         private void AddModifiedLine(RichTextBox rb, CharDiff[] charDiff, bool isNew)
         {
             foreach(var cd in charDiff)
@@ -156,11 +155,13 @@ namespace Chizl.FileComparer
             }
             AddText(rb, $"\n", MODIFIED_COLOR);
         }
-        private void AddText(RichTextBox rb, string text) => AddText(rb, text, Color.Empty);
-        private void AddText(RichTextBox rb, string text, Color color)
+        private void AddText(RichTextBox rb, string text) => AddText(rb, text, Color.Empty, Color.Empty);
+        private void AddText(RichTextBox rb, string text, Color bgColor) => AddText(rb, text, bgColor, Color.Empty);
+        private void AddText(RichTextBox rb, string text, Color bgColor, Color fgColor)
         {
             rb.SelectionStart = rb.TextLength;
-            rb.SelectionBackColor = color.IsEmpty ? rb.BackColor : color;
+            rb.SelectionBackColor = bgColor.IsEmpty ? rb.BackColor : bgColor;
+            rb.SelectionColor = fgColor.IsEmpty ? rb.ForeColor : fgColor;
             rb.AppendText(text);
         }
 
@@ -188,31 +189,6 @@ namespace Chizl.FileComparer
                         break; // only one group should match
                     }
                 }
-            }
-        }
-        private void ChangeColor_Paint(object sender,  PaintEventArgs e)
-        {
-            var g = e.Graphics;
-            var maxPerc = (double)e.ClipRectangle.Height;
-            var r = e.ClipRectangle.Width;
-            Pen addPen = new Pen(Color.Green, 1);
-            Pen delPen = new Pen(Color.Red, 1);
-            Pen modPen = new Pen(Color.Orange, 1);
-
-            foreach (var a in _addPerc)
-            {
-                var t = (float)(maxPerc * a);
-                g.DrawLine(addPen, 0, t, r, t);
-            }
-            foreach (var a in _delPerc)
-            {
-                var t = (float)(maxPerc * a);
-                g.DrawLine(delPen, 0, t, r, t);
-            }
-            foreach (var a in _modPerc)
-            {
-                var t = (float)(maxPerc * a);
-                g.DrawLine(modPen, 0, t, r, t);
             }
         }
 
@@ -327,6 +303,91 @@ namespace Chizl.FileComparer
             else
                 // Handle the case where the file does not exist (e.g., log an error, show a message).
                 MessageBox.Show($"Error: File not found at '{filePath}'", About.Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+        }
+        private void LoadBinaryHexView(string filePath, RichTextBox rtb)
+        {
+            if (!File.Exists(filePath))
+                return;
+
+            var arrayList = DiffTool.ShowInHex(filePath);
+
+            SetFontSize(arrayList[0], rtb);
+
+            foreach (var line in arrayList)
+            {
+                AddText(rtb, $"{line.Offset}  ", BACK_COLOR, OFFSET_COLOR);
+                AddText(rtb, $"{line.HexValues}  ", BACK_COLOR, HEX_COLOR);
+                AddText(rtb, $"{line.PrintableChars}\n", BACK_COLOR, PRINTABLE_COLOR);
+            }
+        }
+        private void SetFontSize(BinaryHexView bhv, RichTextBox rtb)
+        {
+            rtb.Clear();
+            rtb.Font = new Font(rtb.Font.FontFamily, 6.25f);
+            rtb.Clear();
+
+            AddText(rtb, $"{bhv.Offset}  ", BACK_COLOR, OFFSET_COLOR);
+            AddText(rtb, $"{bhv.HexValues}  ", BACK_COLOR, HEX_COLOR);
+            AddText(rtb, $"{bhv.PrintableChars}\n", BACK_COLOR, PRINTABLE_COLOR);
+
+            SetCurrentFontSize(rtb);
+
+            rtb.Clear();
+        }
+        private void SetCurrentFontSize(RichTextBox rtb)
+        {
+            if (string.IsNullOrWhiteSpace(rtb.Text))
+                return;
+
+            SizeF textSize = TextRenderer.MeasureText(rtb.Text, rtb.Font, rtb.Size, TextFormatFlags.WordBreak);
+            float currentFontSize = rtb.Font.Size;
+            float newFontSize = currentFontSize * (rtb.ClientRectangle.Width / textSize.Width);
+            rtb.Font = new Font(rtb.Font.FontFamily, newFontSize);
+        }
+        private void ApplyScroll(RichTextBox Source, RichTextBox Target, ScrollBarDirection Direction)
+        {
+            // unhook target from relevant event, otherwise we end up in an infinite loop!
+            switch (Direction)
+            {
+                case ScrollBarDirection.SB_VERT:
+                    Target.VScroll -= RichText_VScroll;
+                    break;
+                case ScrollBarDirection.SB_HORZ:
+                    Target.HScroll -= RichText_HScroll;
+                    break;
+            }
+
+            IntPtr ptrLparam = new IntPtr(0);
+            IntPtr ptrWparam;
+
+            // Prepare scroll info struct
+            SCROLLINFO si = new SCROLLINFO();
+            si.cbSize = (uint)Marshal.SizeOf(si);
+            si.fMask = (uint)ScrollInfoMask.SIF_ALL;
+
+            // Get current scroller posion
+            ExternApi.GetScrollInfo(Source.Handle, (int)Direction, ref si);
+
+            // if we're tracking, set target to current track position
+            if ((si.nTrackPos > 0) || ((si.nTrackPos == 0) && (si.nPos != 0)))
+                si.nPos = si.nTrackPos;
+
+            // Reposition scroller
+            ExternApi.SetScrollInfo(Target.Handle, (int)Direction, ref si, true);
+            ptrWparam = new IntPtr(ExternApi.SB_THUMBTRACK + 0x10000 * si.nPos);
+
+            // send the relevant message to the target control, and rehook the event
+            switch (Direction)
+            {
+                case ScrollBarDirection.SB_VERT:
+                    ExternApi.SendMessage(Target.Handle, ExternApi.WM_VSCROLL, ptrWparam, ptrLparam);
+                    Target.VScroll += new EventHandler(this.RichText_VScroll);
+                    break;
+                case ScrollBarDirection.SB_HORZ:
+                    ExternApi.SendMessage(Target.Handle, ExternApi.WM_HSCROLL, ptrWparam, ptrLparam);
+                    Target.HScroll += new EventHandler(this.RichText_HScroll);
+                    break;
+            }
         }
     }
 }

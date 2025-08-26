@@ -1,6 +1,5 @@
 ﻿using System;
 using System.IO;
-using System.Text;
 using System.Linq;
 using System.Collections.Generic;
 
@@ -23,9 +22,12 @@ namespace Chizl.FileCompare
         /// </returns>
         public static ComparisonResults CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
-            if (!File.Exists(sourceFile))
+            var sourceFileInfo = new FileInfo(sourceFile);
+            var targetFileInfo = new FileInfo(targetFile);
+
+            if (!sourceFileInfo.Exists)
                 return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found or accessible."));
-            if (!File.Exists(targetFile))
+            if (!targetFileInfo.Exists)
                 return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found or accessible."));
 
             var isSrcBinary = IsBinary(sourceFile, out string errMsg);
@@ -42,11 +44,13 @@ namespace Chizl.FileCompare
             //if one of them is binary, view them both as binary else both as ascii.
             if (isSrcBinary || isTrgBinary)
             {
-                if (!LoadBinary(sourceFile, out linesOld, out errMsg))
-                    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
+                return new ComparisonResults(new Exception($"Binary files are not supported at this time."));
 
-                if (!LoadBinary(targetFile, out linesNew, out errMsg))
-                    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
+                //if (!LoadBinary(sourceFile, out linesOld, out errMsg))
+                //    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
+
+                //if (!LoadBinary(targetFile, out linesNew, out errMsg))
+                //    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
             }
             else
             {
@@ -130,6 +134,58 @@ namespace Chizl.FileCompare
             return new ComparisonResults(retVal);
 
         }
+        /// <summary>
+        /// Load files as binary, then convert to string hex format for side by side view of next binary load file.
+        /// </summary>
+        /// <param name="fullPath"></param>
+        /// <param name="returnArr"></param>
+        /// <param name="errorMsg"></param>
+        /// <returns></returns>
+        public static BinaryHexView[] ShowInHex(string fullPath)
+        {
+            var binHexViewList = new List<BinaryHexView>();
+
+            try
+            {
+                using (FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read))
+                {
+                    int bytesRead;
+                    byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
+                    int offset = 0;
+
+                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        var bhView = new BinaryHexView();
+                        // Display offset
+                        bhView.AddOffset($"{offset:X8}:");
+
+                        // Display hex values
+                        for (int i = 0; i < bytesRead; i++)
+                            bhView.AddHexStr($"{buffer[i]:X2}");
+
+                        // Display ASCII representation (printable characters)
+                        for (int i = 0; i < bytesRead; i++)
+                        {
+                            char c = (char)buffer[i];
+                            if (char.IsControl(c) || char.IsWhiteSpace(c) && c != ' ')
+                                bhView.AddPChar(".");
+                            else
+                                bhView.AddPChar($"{c}");
+                        }
+
+                        binHexViewList.Add(bhView);
+                        offset += bytesRead;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Exception in ShowInHex(\"{fullPath}\"):\n{ex.Message}");
+            }
+
+            return binHexViewList.ToArray();
+        }
+
         private static int[,] BuildLcsTable(string[] a, string[] b)
         {
             int m = a.Length, n = b.Length;
@@ -257,9 +313,13 @@ namespace Chizl.FileCompare
                         if (buffer[i] == '\0')
                         {
                             nullCount++;
-                            // There are malformed ascii text files with 1 terminator.  So we look for 2.
+
+                            // There are some malformed ascii text files with 1
+                            // string terminator.  So we look for more than 1.
+                            // Its been found, most of the time at the end of the file.
                             if (nullCount > 1)
-                                return true; // Found more than one null, most definitely binary
+                                // Found more than one string terminator, most definitely binary
+                                return true;
                         }
                     }
                 }
@@ -270,70 +330,6 @@ namespace Chizl.FileCompare
             }
 
             return false; // Found one or less null, likely text
-        }
-        /// <summary>
-        /// Load files as binary, then convert to string hex format for side by side view of next binary load file.
-        /// </summary>
-        /// <param name="fullPath"></param>
-        /// <param name="returnArr"></param>
-        /// <param name="errorMsg"></param>
-        /// <returns></returns>
-        private static bool LoadBinary(string fullPath, out string[] returnArr, out string errorMsg)
-        {
-            var retVal = true;
-            var returnList = new List<string>();
-            returnArr = new string[0] { };
-            errorMsg = string.Empty;
-
-            try
-            {
-                throw new Exception("Binary files are not supported yet.\nLCS Approach causes OutOfMemoryException for binaries.");
-
-                using (FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read))
-                {
-                    int bytesRead;
-                    byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
-                    int offset = 0;
-
-                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
-                    {
-                        var sb = new StringBuilder();
-
-                        // Display offset
-                        sb.Append($"{offset:X8}: ");
-
-                        // Display hex values
-                        for (int i = 0; i < bytesRead; i++)
-                            sb.Append($"{buffer[i]:X2} ");
-
-                        // Pad if less than 16 bytes were read in the last chunk
-                        for (int i = bytesRead; i < buffer.Length; i++)
-                            sb.Append("   "); // Three spaces for padding
-
-                        sb.Append("  "); // Separator between hex and ASCII
-
-                        // Display ASCII representation (printable characters)
-                        for (int i = 0; i < bytesRead; i++)
-                        {
-                            char c = (char)buffer[i];
-                            if (char.IsControl(c) || char.IsWhiteSpace(c) && c != ' ')
-                                sb.Append("."); // Represent non-printable characters as a dot
-                            else
-                                sb.Append(c);
-                        }
-                        sb.AppendLine();
-                        returnList.Add(sb.ToString());
-                        offset += bytesRead;
-                    }
-                }
-                returnArr = returnList.ToArray();
-            }
-            catch (Exception ex)
-            {
-                errorMsg = $"LoadBinary('{fullPath}'):\n{ex.Message}";
-                retVal = false;
-            }
-            return retVal;
         }
     }
 }

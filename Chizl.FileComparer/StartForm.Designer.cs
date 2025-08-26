@@ -35,6 +35,7 @@
             this.Panel1 = new System.Windows.Forms.Panel();
             this.OldAsciiFile = new System.Windows.Forms.TextBox();
             this.Panel2 = new System.Windows.Forms.Panel();
+            this.OldBinaryViewButton = new System.Windows.Forms.Button();
             this.OldAsciiViewButton = new System.Windows.Forms.Button();
             this.OldAsciiButton = new System.Windows.Forms.Button();
             this.NewAsciiContent = new System.Windows.Forms.RichTextBox();
@@ -42,6 +43,7 @@
             this.Panel3 = new System.Windows.Forms.Panel();
             this.NewAsciiFile = new System.Windows.Forms.TextBox();
             this.Panel4 = new System.Windows.Forms.Panel();
+            this.NewBinaryViewButton = new System.Windows.Forms.Button();
             this.NewAsciiViewButton = new System.Windows.Forms.Button();
             this.NewAsciiButton = new System.Windows.Forms.Button();
             this.MenuStrip1 = new System.Windows.Forms.MenuStrip();
@@ -71,13 +73,15 @@
             this.OldAsciiContent.Name = "OldAsciiContent";
             this.OldAsciiContent.ReadOnly = true;
             this.OldAsciiContent.ShowSelectionMargin = true;
-            this.OldAsciiContent.Size = new System.Drawing.Size(622, 600);
+            this.OldAsciiContent.Size = new System.Drawing.Size(610, 600);
             this.OldAsciiContent.TabIndex = 0;
             this.OldAsciiContent.Text = "";
             this.OldAsciiContent.WordWrap = false;
+            this.OldAsciiContent.Resize += new System.EventHandler(this.AsciiContent_Resize);
             // 
             // SplitContainer1
             // 
+            this.SplitContainer1.BackColor = System.Drawing.Color.Gray;
             this.SplitContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.SplitContainer1.Location = new System.Drawing.Point(0, 27);
             this.SplitContainer1.Name = "SplitContainer1";
@@ -96,14 +100,16 @@
             this.SplitContainer1.Panel2.Controls.Add(this.Panel3);
             this.SplitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
             this.SplitContainer1.Size = new System.Drawing.Size(1276, 641);
-            this.SplitContainer1.SplitterDistance = 647;
-            this.SplitContainer1.SplitterWidth = 10;
+            this.SplitContainer1.SplitterDistance = 635;
+            this.SplitContainer1.SplitterWidth = 5;
             this.SplitContainer1.TabIndex = 1;
             // 
             // OldChangeColor
             // 
+            this.OldChangeColor.BackColor = System.Drawing.Color.White;
+            this.OldChangeColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.OldChangeColor.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldChangeColor.Location = new System.Drawing.Point(627, 36);
+            this.OldChangeColor.Location = new System.Drawing.Point(615, 36);
             this.OldChangeColor.Name = "OldChangeColor";
             this.OldChangeColor.Size = new System.Drawing.Size(15, 600);
             this.OldChangeColor.TabIndex = 3;
@@ -117,7 +123,7 @@
             this.Panel1.Location = new System.Drawing.Point(5, 5);
             this.Panel1.Name = "Panel1";
             this.Panel1.Padding = new System.Windows.Forms.Padding(5);
-            this.Panel1.Size = new System.Drawing.Size(637, 31);
+            this.Panel1.Size = new System.Drawing.Size(625, 31);
             this.Panel1.TabIndex = 2;
             // 
             // OldAsciiFile
@@ -127,26 +133,41 @@
             this.OldAsciiFile.Location = new System.Drawing.Point(5, 5);
             this.OldAsciiFile.Name = "OldAsciiFile";
             this.OldAsciiFile.ReadOnly = true;
-            this.OldAsciiFile.Size = new System.Drawing.Size(577, 20);
+            this.OldAsciiFile.Size = new System.Drawing.Size(549, 20);
             this.OldAsciiFile.TabIndex = 1;
             // 
             // Panel2
             // 
+            this.Panel2.Controls.Add(this.OldBinaryViewButton);
             this.Panel2.Controls.Add(this.OldAsciiViewButton);
             this.Panel2.Controls.Add(this.OldAsciiButton);
             this.Panel2.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel2.Location = new System.Drawing.Point(582, 5);
+            this.Panel2.Location = new System.Drawing.Point(554, 5);
             this.Panel2.Name = "Panel2";
             this.Panel2.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.Panel2.Size = new System.Drawing.Size(50, 21);
+            this.Panel2.Size = new System.Drawing.Size(66, 21);
             this.Panel2.TabIndex = 3;
+            this.Panel2.Tag = "&Binary View";
+            // 
+            // OldBinaryViewButton
+            // 
+            this.OldBinaryViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.binary_wheel;
+            this.OldBinaryViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.OldBinaryViewButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.OldBinaryViewButton.Location = new System.Drawing.Point(3, 0);
+            this.OldBinaryViewButton.Name = "OldBinaryViewButton";
+            this.OldBinaryViewButton.Size = new System.Drawing.Size(21, 21);
+            this.OldBinaryViewButton.TabIndex = 4;
+            this.OldBinaryViewButton.Tag = "Binary View";
+            this.OldBinaryViewButton.UseVisualStyleBackColor = true;
+            this.OldBinaryViewButton.Click += new System.EventHandler(this.OldBinaryViewButton_Click);
             // 
             // OldAsciiViewButton
             // 
             this.OldAsciiViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.view_on;
             this.OldAsciiViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.OldAsciiViewButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldAsciiViewButton.Location = new System.Drawing.Point(8, 0);
+            this.OldAsciiViewButton.Location = new System.Drawing.Point(24, 0);
             this.OldAsciiViewButton.Name = "OldAsciiViewButton";
             this.OldAsciiViewButton.Size = new System.Drawing.Size(21, 21);
             this.OldAsciiViewButton.TabIndex = 3;
@@ -158,7 +179,7 @@
             this.OldAsciiButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.AddButton_128x128;
             this.OldAsciiButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.OldAsciiButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldAsciiButton.Location = new System.Drawing.Point(29, 0);
+            this.OldAsciiButton.Location = new System.Drawing.Point(45, 0);
             this.OldAsciiButton.Name = "OldAsciiButton";
             this.OldAsciiButton.Size = new System.Drawing.Size(21, 21);
             this.OldAsciiButton.TabIndex = 2;
@@ -173,13 +194,16 @@
             this.NewAsciiContent.Name = "NewAsciiContent";
             this.NewAsciiContent.ReadOnly = true;
             this.NewAsciiContent.ShowSelectionMargin = true;
-            this.NewAsciiContent.Size = new System.Drawing.Size(594, 600);
+            this.NewAsciiContent.Size = new System.Drawing.Size(611, 600);
             this.NewAsciiContent.TabIndex = 1;
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
+            this.NewAsciiContent.Resize += new System.EventHandler(this.AsciiContent_Resize);
             // 
             // NewChangeColor
             // 
+            this.NewChangeColor.BackColor = System.Drawing.Color.White;
+            this.NewChangeColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.NewChangeColor.Dock = System.Windows.Forms.DockStyle.Left;
             this.NewChangeColor.Location = new System.Drawing.Point(5, 36);
             this.NewChangeColor.Name = "NewChangeColor";
@@ -195,7 +219,7 @@
             this.Panel3.Location = new System.Drawing.Point(5, 5);
             this.Panel3.Name = "Panel3";
             this.Panel3.Padding = new System.Windows.Forms.Padding(5);
-            this.Panel3.Size = new System.Drawing.Size(609, 31);
+            this.Panel3.Size = new System.Drawing.Size(626, 31);
             this.Panel3.TabIndex = 3;
             // 
             // NewAsciiFile
@@ -205,26 +229,40 @@
             this.NewAsciiFile.Location = new System.Drawing.Point(5, 5);
             this.NewAsciiFile.Name = "NewAsciiFile";
             this.NewAsciiFile.ReadOnly = true;
-            this.NewAsciiFile.Size = new System.Drawing.Size(549, 20);
+            this.NewAsciiFile.Size = new System.Drawing.Size(551, 20);
             this.NewAsciiFile.TabIndex = 1;
             // 
             // Panel4
             // 
+            this.Panel4.Controls.Add(this.NewBinaryViewButton);
             this.Panel4.Controls.Add(this.NewAsciiViewButton);
             this.Panel4.Controls.Add(this.NewAsciiButton);
             this.Panel4.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel4.Location = new System.Drawing.Point(554, 5);
+            this.Panel4.Location = new System.Drawing.Point(556, 5);
             this.Panel4.Name = "Panel4";
             this.Panel4.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
-            this.Panel4.Size = new System.Drawing.Size(50, 21);
+            this.Panel4.Size = new System.Drawing.Size(65, 21);
             this.Panel4.TabIndex = 3;
+            // 
+            // NewBinaryViewButton
+            // 
+            this.NewBinaryViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.binary_wheel;
+            this.NewBinaryViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
+            this.NewBinaryViewButton.Dock = System.Windows.Forms.DockStyle.Right;
+            this.NewBinaryViewButton.Location = new System.Drawing.Point(2, 0);
+            this.NewBinaryViewButton.Name = "NewBinaryViewButton";
+            this.NewBinaryViewButton.Size = new System.Drawing.Size(21, 21);
+            this.NewBinaryViewButton.TabIndex = 4;
+            this.NewBinaryViewButton.Tag = "Binary View";
+            this.NewBinaryViewButton.UseVisualStyleBackColor = true;
+            this.NewBinaryViewButton.Click += new System.EventHandler(this.NewBinaryViewButton_Click);
             // 
             // NewAsciiViewButton
             // 
             this.NewAsciiViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.view_on;
             this.NewAsciiViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.NewAsciiViewButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.NewAsciiViewButton.Location = new System.Drawing.Point(8, 0);
+            this.NewAsciiViewButton.Location = new System.Drawing.Point(23, 0);
             this.NewAsciiViewButton.Name = "NewAsciiViewButton";
             this.NewAsciiViewButton.Size = new System.Drawing.Size(21, 21);
             this.NewAsciiViewButton.TabIndex = 3;
@@ -236,7 +274,7 @@
             this.NewAsciiButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.AddButton_128x128;
             this.NewAsciiButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.NewAsciiButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.NewAsciiButton.Location = new System.Drawing.Point(29, 0);
+            this.NewAsciiButton.Location = new System.Drawing.Point(44, 0);
             this.NewAsciiButton.Name = "NewAsciiButton";
             this.NewAsciiButton.Size = new System.Drawing.Size(21, 21);
             this.NewAsciiButton.TabIndex = 2;
@@ -375,6 +413,8 @@
         private System.Windows.Forms.ToolStripStatusLabel StatusText;
         private System.Windows.Forms.Panel OldChangeColor;
         private System.Windows.Forms.Panel NewChangeColor;
+        private System.Windows.Forms.Button OldBinaryViewButton;
+        private System.Windows.Forms.Button NewBinaryViewButton;
     }
 }
 
