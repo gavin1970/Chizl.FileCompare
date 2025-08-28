@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(StartForm));
             this.OldAsciiContent = new System.Windows.Forms.RichTextBox();
             this.SplitContainer1 = new System.Windows.Forms.SplitContainer();
@@ -53,6 +54,8 @@
             this.StatusStrip1 = new System.Windows.Forms.StatusStrip();
             this.StatusText = new System.Windows.Forms.ToolStripStatusLabel();
             this.CompareButtonToollbar = new System.Windows.Forms.Button();
+            this.ResetTimer = new System.Windows.Forms.Timer(this.components);
+            this.toolStripStatusPadding = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -73,7 +76,7 @@
             this.OldAsciiContent.Name = "OldAsciiContent";
             this.OldAsciiContent.ReadOnly = true;
             this.OldAsciiContent.ShowSelectionMargin = true;
-            this.OldAsciiContent.Size = new System.Drawing.Size(610, 600);
+            this.OldAsciiContent.Size = new System.Drawing.Size(643, 595);
             this.OldAsciiContent.TabIndex = 0;
             this.OldAsciiContent.Text = "";
             this.OldAsciiContent.WordWrap = false;
@@ -99,8 +102,8 @@
             this.SplitContainer1.Panel2.Controls.Add(this.NewChangeColor);
             this.SplitContainer1.Panel2.Controls.Add(this.Panel3);
             this.SplitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
-            this.SplitContainer1.Size = new System.Drawing.Size(1276, 641);
-            this.SplitContainer1.SplitterDistance = 635;
+            this.SplitContainer1.Size = new System.Drawing.Size(1344, 636);
+            this.SplitContainer1.SplitterDistance = 668;
             this.SplitContainer1.SplitterWidth = 5;
             this.SplitContainer1.TabIndex = 1;
             // 
@@ -109,9 +112,9 @@
             this.OldChangeColor.BackColor = System.Drawing.Color.White;
             this.OldChangeColor.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.OldChangeColor.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldChangeColor.Location = new System.Drawing.Point(615, 36);
+            this.OldChangeColor.Location = new System.Drawing.Point(648, 36);
             this.OldChangeColor.Name = "OldChangeColor";
-            this.OldChangeColor.Size = new System.Drawing.Size(15, 600);
+            this.OldChangeColor.Size = new System.Drawing.Size(15, 595);
             this.OldChangeColor.TabIndex = 3;
             this.OldChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
             // 
@@ -123,7 +126,7 @@
             this.Panel1.Location = new System.Drawing.Point(5, 5);
             this.Panel1.Name = "Panel1";
             this.Panel1.Padding = new System.Windows.Forms.Padding(5);
-            this.Panel1.Size = new System.Drawing.Size(625, 31);
+            this.Panel1.Size = new System.Drawing.Size(658, 31);
             this.Panel1.TabIndex = 2;
             // 
             // OldAsciiFile
@@ -133,7 +136,7 @@
             this.OldAsciiFile.Location = new System.Drawing.Point(5, 5);
             this.OldAsciiFile.Name = "OldAsciiFile";
             this.OldAsciiFile.ReadOnly = true;
-            this.OldAsciiFile.Size = new System.Drawing.Size(549, 20);
+            this.OldAsciiFile.Size = new System.Drawing.Size(582, 20);
             this.OldAsciiFile.TabIndex = 1;
             // 
             // Panel2
@@ -142,7 +145,7 @@
             this.Panel2.Controls.Add(this.OldAsciiViewButton);
             this.Panel2.Controls.Add(this.OldAsciiButton);
             this.Panel2.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel2.Location = new System.Drawing.Point(554, 5);
+            this.Panel2.Location = new System.Drawing.Point(587, 5);
             this.Panel2.Name = "Panel2";
             this.Panel2.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.Panel2.Size = new System.Drawing.Size(66, 21);
@@ -194,7 +197,7 @@
             this.NewAsciiContent.Name = "NewAsciiContent";
             this.NewAsciiContent.ReadOnly = true;
             this.NewAsciiContent.ShowSelectionMargin = true;
-            this.NewAsciiContent.Size = new System.Drawing.Size(611, 600);
+            this.NewAsciiContent.Size = new System.Drawing.Size(646, 595);
             this.NewAsciiContent.TabIndex = 1;
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
@@ -207,7 +210,7 @@
             this.NewChangeColor.Dock = System.Windows.Forms.DockStyle.Left;
             this.NewChangeColor.Location = new System.Drawing.Point(5, 36);
             this.NewChangeColor.Name = "NewChangeColor";
-            this.NewChangeColor.Size = new System.Drawing.Size(15, 600);
+            this.NewChangeColor.Size = new System.Drawing.Size(15, 595);
             this.NewChangeColor.TabIndex = 4;
             this.NewChangeColor.Paint += new System.Windows.Forms.PaintEventHandler(this.ChangeColor_Paint);
             // 
@@ -219,7 +222,7 @@
             this.Panel3.Location = new System.Drawing.Point(5, 5);
             this.Panel3.Name = "Panel3";
             this.Panel3.Padding = new System.Windows.Forms.Padding(5);
-            this.Panel3.Size = new System.Drawing.Size(626, 31);
+            this.Panel3.Size = new System.Drawing.Size(661, 31);
             this.Panel3.TabIndex = 3;
             // 
             // NewAsciiFile
@@ -229,7 +232,7 @@
             this.NewAsciiFile.Location = new System.Drawing.Point(5, 5);
             this.NewAsciiFile.Name = "NewAsciiFile";
             this.NewAsciiFile.ReadOnly = true;
-            this.NewAsciiFile.Size = new System.Drawing.Size(551, 20);
+            this.NewAsciiFile.Size = new System.Drawing.Size(586, 20);
             this.NewAsciiFile.TabIndex = 1;
             // 
             // Panel4
@@ -238,7 +241,7 @@
             this.Panel4.Controls.Add(this.NewAsciiViewButton);
             this.Panel4.Controls.Add(this.NewAsciiButton);
             this.Panel4.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel4.Location = new System.Drawing.Point(556, 5);
+            this.Panel4.Location = new System.Drawing.Point(591, 5);
             this.Panel4.Name = "Panel4";
             this.Panel4.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.Panel4.Size = new System.Drawing.Size(65, 21);
@@ -288,7 +291,7 @@
             this.ScoreThresholdDropdown});
             this.MenuStrip1.Location = new System.Drawing.Point(0, 0);
             this.MenuStrip1.Name = "MenuStrip1";
-            this.MenuStrip1.Size = new System.Drawing.Size(1276, 27);
+            this.MenuStrip1.Size = new System.Drawing.Size(1344, 27);
             this.MenuStrip1.TabIndex = 2;
             this.MenuStrip1.Text = "MenuStrip1";
             // 
@@ -329,18 +332,22 @@
             // 
             // StatusStrip1
             // 
+            this.StatusStrip1.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.StatusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.toolStripStatusPadding,
             this.StatusText});
-            this.StatusStrip1.Location = new System.Drawing.Point(0, 668);
+            this.StatusStrip1.Location = new System.Drawing.Point(0, 663);
             this.StatusStrip1.Name = "StatusStrip1";
-            this.StatusStrip1.Size = new System.Drawing.Size(1276, 22);
+            this.StatusStrip1.Size = new System.Drawing.Size(1344, 22);
+            this.StatusStrip1.SizingGrip = false;
             this.StatusStrip1.TabIndex = 3;
             this.StatusStrip1.Text = "StatusStrip1";
             // 
             // StatusText
             // 
+            this.StatusText.BackColor = System.Drawing.SystemColors.ControlDark;
             this.StatusText.Name = "StatusText";
-            this.StatusText.Size = new System.Drawing.Size(1261, 17);
+            this.StatusText.Size = new System.Drawing.Size(1288, 17);
             this.StatusText.Spring = true;
             this.StatusText.Text = "Ready...";
             this.StatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -355,11 +362,23 @@
             this.CompareButtonToollbar.UseVisualStyleBackColor = true;
             this.CompareButtonToollbar.Click += new System.EventHandler(this.CompareButtonToollbar_Click);
             // 
+            // ResetTimer
+            // 
+            this.ResetTimer.Interval = 3000;
+            this.ResetTimer.Tick += new System.EventHandler(this.ResetTimer_Tick);
+            // 
+            // toolStripStatusPadding
+            // 
+            this.toolStripStatusPadding.Name = "toolStripStatusPadding";
+            this.toolStripStatusPadding.Size = new System.Drawing.Size(10, 17);
+            this.toolStripStatusPadding.Text = " ";
+            // 
             // StartForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1276, 690);
+            this.BackColor = System.Drawing.SystemColors.ControlDarkDark;
+            this.ClientSize = new System.Drawing.Size(1344, 690);
             this.Controls.Add(this.CompareButtonToollbar);
             this.Controls.Add(this.SplitContainer1);
             this.Controls.Add(this.MenuStrip1);
@@ -367,6 +386,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.MenuStrip1;
             this.Name = "StartForm";
+            this.Padding = new System.Windows.Forms.Padding(0, 0, 0, 5);
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Form1";
             this.Load += new System.EventHandler(this.StartForm_Load);
@@ -415,6 +435,8 @@
         private System.Windows.Forms.Panel NewChangeColor;
         private System.Windows.Forms.Button OldBinaryViewButton;
         private System.Windows.Forms.Button NewBinaryViewButton;
+        private System.Windows.Forms.Timer ResetTimer;
+        private System.Windows.Forms.ToolStripStatusLabel toolStripStatusPadding;
     }
 }
 

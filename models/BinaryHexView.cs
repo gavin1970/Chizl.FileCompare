@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Chizl.FileCompare
+﻿namespace Chizl.FileCompare
 {
     public class BinaryHexView
     {

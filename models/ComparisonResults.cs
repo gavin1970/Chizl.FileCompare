@@ -16,7 +16,7 @@ namespace Chizl.FileCompare
         internal ComparisonResults(List<CompareDiff> compareDiffs)
         {
             this.LineComparison = compareDiffs.ToArray();
-            this.Diffs = new Counts(
+            this.Diffs = new DiffCounts(
                 compareDiffs.Where(w => w.DiffType == DiffType.Added).Count(),
                 compareDiffs.Where(w => w.DiffType == DiffType.Deleted).Count(),
                 compareDiffs.Where(w => w.DiffType == DiffType.Modified).Count(),
@@ -30,21 +30,6 @@ namespace Chizl.FileCompare
 
         public Exception Exception { get; } = new Exception();
         public CompareDiff[] LineComparison { get; } = new CompareDiff[0];
-        public Counts Diffs { get; } = new Counts(0, 0, 0, 0);
-
-        public class Counts
-        {
-            internal Counts(int added, int deleted, int modified, int identical)
-            {
-                Added = added;
-                Deleted = deleted;
-                Modified = modified;
-                Identical = identical;
-            }
-            public int Added { get; } = 0;
-            public int Deleted { get; } = 0;
-            public int Modified { get; } = 0;
-            public int Identical { get; } = 0;
-        }
+        public DiffCounts Diffs { get; } = new DiffCounts(0, 0, 0, 0);
     }
 }

@@ -206,6 +206,12 @@ namespace Chizl.FileComparer
             }
             else if (!Disposing && !IsDisposed)
             {
+                this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+                this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+
+                SplitContainer1.Panel1Collapsed = false;
+                SplitContainer1.Panel2Collapsed = false;
+
                 OldAsciiContent.Clear();
                 NewAsciiContent.Clear();
                 var score_threshold = .30;
@@ -227,8 +233,10 @@ namespace Chizl.FileComparer
                 else
                 {
                     StatusText.Text = $"Line by Line Status:  Added( {fileComparison.Diffs.Added} ), Deleted( {fileComparison.Diffs.Deleted} ), Modified( {fileComparison.Diffs.Modified} ), No Change({fileComparison.Diffs.Identical} )";
-                    StatusText.BackColor = SystemColors.Control;
+                    StatusText.BackColor = Color.Yellow;
                 }
+
+                ResetTimer.Enabled = true;
 
                 var stringFiller = $"{new string(' ', prevLineSize)}\n";
                 var maxPerc = fileComparison.LineComparison.Length;
@@ -311,6 +319,29 @@ namespace Chizl.FileComparer
 
             var arrayList = DiffTool.ShowInHex(filePath);
 
+            if (rtb.Name.StartsWith("Old"))
+            {
+                if(SplitContainer1.Panel2Collapsed)
+                {
+                    SplitContainer1.Panel2Collapsed = false;
+                    SetFontSize(arrayList[0], rtb);
+                    return;
+                }
+                SplitContainer1.Panel2Collapsed = true;
+                SplitContainer1.Panel1Collapsed = false;
+            }
+            else
+            {
+                if (SplitContainer1.Panel1Collapsed)
+                {
+                    SplitContainer1.Panel1Collapsed = false;
+                    SetFontSize(arrayList[0], rtb);
+                    return;
+                }
+                SplitContainer1.Panel1Collapsed = true;
+                SplitContainer1.Panel2Collapsed = false;
+            }
+
             SetFontSize(arrayList[0], rtb);
 
             foreach (var line in arrayList)
@@ -319,6 +350,10 @@ namespace Chizl.FileComparer
                 AddText(rtb, $"{line.HexValues}  ", BACK_COLOR, HEX_COLOR);
                 AddText(rtb, $"{line.PrintableChars}\n", BACK_COLOR, PRINTABLE_COLOR);
             }
+
+            StatusText.Text = $"HexView auto zooms text based on window.  Use Control-MouseWheel to Zoom In/Out.  Click HexView again to exit HexView.";
+            StatusText.BackColor = Color.Yellow;
+            ResetTimer.Enabled = true;
         }
         private void SetFontSize(BinaryHexView bhv, RichTextBox rtb)
         {
@@ -388,6 +423,12 @@ namespace Chizl.FileComparer
                     Target.HScroll += new EventHandler(this.RichText_HScroll);
                     break;
             }
+        }
+
+        private void ResetTimer_Tick(object sender, EventArgs e)
+        {
+            ResetTimer.Enabled = false;
+            StatusText.BackColor = SystemColors.ControlDark;
         }
     }
 }
