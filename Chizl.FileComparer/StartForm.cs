@@ -80,11 +80,6 @@ namespace Chizl.FileComparer
         { 
             _formResizing = false;
             DiffColorScroll();
-            //if (this.NewAsciiContent.Text.Trim().StartsWith("0000"))
-            //{
-            //    SetCurrentFontSize(this.NewAsciiContent);
-            //    SetCurrentFontSize(this.OldAsciiContent);
-            //}
         }
         private void LoadHistory()
         {
@@ -263,8 +258,7 @@ namespace Chizl.FileComparer
         /// <param name="sideBySide">False will do an overlay only for Binary view.</param>
         private void ShowComparison(bool forceBinary = false, bool sideBySide = true)
         {
-            this.OldAsciiContent.Clear();
-            this.NewAsciiContent.Clear();
+            ClearRichText();
 
             var prevLineSize = 30;
 
@@ -281,16 +275,6 @@ namespace Chizl.FileComparer
 
             ResetTimer.Enabled = true;
 
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            /////////////////////////////////////////////////////
-            
             var lines = _lastFileComparison.LineComparison.OrderBy(o => o.LineNumber).ToArray();
             var maxPerc = lines.Length;
             var scrollLineMarker = 0;
@@ -527,15 +511,13 @@ namespace Chizl.FileComparer
             }
             else if (!Disposing && !IsDisposed)
             {
-                ResetContent();
-                this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
-                this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+                //this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+                //this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
 
                 SplitContainer1.Panel1Collapsed = false;
                 SplitContainer1.Panel2Collapsed = false;
 
-                this.OldAsciiContent.Clear();
-                this.NewAsciiContent.Clear();
+                ClearRichText();
 
                 var score_threshold = .30;
                 if (!string.IsNullOrWhiteSpace(ScoreThresholdDropdown.Text))
@@ -598,7 +580,7 @@ namespace Chizl.FileComparer
                 if(SplitContainer1.Panel2Collapsed)
                 {
                     SplitContainer1.Panel2Collapsed = false;
-                    SetFontSize(arrayList[0], rtb);
+                    //SetFontSize(arrayList[0], rtb);
                     return;
                 }
                 SplitContainer1.Panel2Collapsed = true;
@@ -609,14 +591,14 @@ namespace Chizl.FileComparer
                 if (SplitContainer1.Panel1Collapsed)
                 {
                     SplitContainer1.Panel1Collapsed = false;
-                    SetFontSize(arrayList[0], rtb);
+                    //SetFontSize(arrayList[0], rtb);
                     return;
                 }
                 SplitContainer1.Panel1Collapsed = true;
                 SplitContainer1.Panel2Collapsed = false;
             }
 
-            SetFontSize(arrayList[0], rtb);
+            //SetFontSize(arrayList[0], rtb);
 
             foreach (var line in arrayList)
             {
@@ -642,10 +624,23 @@ namespace Chizl.FileComparer
             if (this.SplitContainer1.Panel2Collapsed)
                 this.SplitContainer1.Panel2Collapsed = false;
 
+            ClearRichText();
+
+            this.OldAsciiContent.ScrollBars = RichTextBoxScrollBars.Both;
+            this.NewAsciiContent.ScrollBars = RichTextBoxScrollBars.Both;
+
+            EnableButtons();
+        }
+        private void ClearRichText()
+        {
             this.OldAsciiContent.Clear();
             this.NewAsciiContent.Clear();
 
-            EnableButtons();
+            //seem to be a odd bug where the scrollbars are not showing up, until the
+            //form is resized.  The RichTextBoxes are both using Dock = Fill, so setting
+            //Width=0 doesn't change the size, but it forces the scrollbars to show up.
+            this.NewAsciiContent.Width = 0;
+            this.OldAsciiContent.Width = 0;
         }
         private void EnableButtons()
         {
@@ -661,7 +656,6 @@ namespace Chizl.FileComparer
         {
             rtb.Clear();
             rtb.Font = new Font(rtb.Font.FontFamily, 6.25f);
-            rtb.Clear();
 
             AddText(rtb, $"{bhv.Offset}  ", BACK_COLOR, OFFSET_COLOR);
             AddText(rtb, $"{bhv.HexValues}  ", BACK_COLOR, HEX_COLOR);

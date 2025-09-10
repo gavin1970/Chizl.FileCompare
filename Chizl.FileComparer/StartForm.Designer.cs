@@ -35,6 +35,7 @@
             this.OldChangeColor = new System.Windows.Forms.Panel();
             this.Panel1 = new System.Windows.Forms.Panel();
             this.OldAsciiFile = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.Panel2 = new System.Windows.Forms.Panel();
             this.OldBinaryViewButton = new System.Windows.Forms.Button();
             this.OldFileViewButton = new System.Windows.Forms.Button();
@@ -44,6 +45,7 @@
             this.NewChangeColor = new System.Windows.Forms.Panel();
             this.Panel3 = new System.Windows.Forms.Panel();
             this.NewAsciiFile = new System.Windows.Forms.ComboBox();
+            this.label2 = new System.Windows.Forms.Label();
             this.Panel4 = new System.Windows.Forms.Panel();
             this.NewBinaryViewButton = new System.Windows.Forms.Button();
             this.NewFileViewButton = new System.Windows.Forms.Button();
@@ -58,8 +60,6 @@
             this.CompareButtonToollbar = new System.Windows.Forms.Button();
             this.ResetTimer = new System.Windows.Forms.Timer(this.components);
             this.ViewAsBinaryButtonToollbar = new System.Windows.Forms.Button();
-            this.label1 = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -95,8 +95,8 @@
             this.SplitContainer1.Panel2.Controls.Add(this.Panel3);
             this.SplitContainer1.Panel2.Padding = new System.Windows.Forms.Padding(5);
             this.SplitContainer1.Size = new System.Drawing.Size(1344, 636);
-            this.SplitContainer1.SplitterDistance = 668;
-            this.SplitContainer1.SplitterWidth = 5;
+            this.SplitContainer1.SplitterDistance = 667;
+            this.SplitContainer1.SplitterWidth = 10;
             this.SplitContainer1.TabIndex = 1;
             // 
             // OldAsciiContent
@@ -107,10 +107,9 @@
             this.OldAsciiContent.Location = new System.Drawing.Point(5, 36);
             this.OldAsciiContent.Name = "OldAsciiContent";
             this.OldAsciiContent.ReadOnly = true;
-            this.OldAsciiContent.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.OldAsciiContent.ShortcutsEnabled = false;
             this.OldAsciiContent.ShowSelectionMargin = true;
-            this.OldAsciiContent.Size = new System.Drawing.Size(643, 595);
+            this.OldAsciiContent.Size = new System.Drawing.Size(642, 595);
             this.OldAsciiContent.TabIndex = 0;
             this.OldAsciiContent.Text = "";
             this.OldAsciiContent.WordWrap = false;
@@ -119,7 +118,7 @@
             // 
             this.panel5.Controls.Add(this.OldChangeColor);
             this.panel5.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel5.Location = new System.Drawing.Point(648, 36);
+            this.panel5.Location = new System.Drawing.Point(647, 36);
             this.panel5.Name = "panel5";
             this.panel5.Padding = new System.Windows.Forms.Padding(0, 20, 0, 20);
             this.panel5.Size = new System.Drawing.Size(15, 595);
@@ -145,7 +144,7 @@
             this.Panel1.Location = new System.Drawing.Point(5, 5);
             this.Panel1.Name = "Panel1";
             this.Panel1.Padding = new System.Windows.Forms.Padding(5);
-            this.Panel1.Size = new System.Drawing.Size(658, 31);
+            this.Panel1.Size = new System.Drawing.Size(657, 31);
             this.Panel1.TabIndex = 2;
             // 
             // OldAsciiFile
@@ -154,9 +153,21 @@
             this.OldAsciiFile.FormattingEnabled = true;
             this.OldAsciiFile.Location = new System.Drawing.Point(105, 5);
             this.OldAsciiFile.Name = "OldAsciiFile";
-            this.OldAsciiFile.Size = new System.Drawing.Size(482, 21);
+            this.OldAsciiFile.Size = new System.Drawing.Size(481, 21);
             this.OldAsciiFile.TabIndex = 4;
             this.OldAsciiFile.SelectedIndexChanged += new System.EventHandler(this.Dropdown_SelectedIndexChanged);
+            // 
+            // label1
+            // 
+            this.label1.Dock = System.Windows.Forms.DockStyle.Left;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.ForeColor = System.Drawing.Color.White;
+            this.label1.Location = new System.Drawing.Point(5, 5);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(100, 21);
+            this.label1.TabIndex = 5;
+            this.label1.Text = "Older File:";
+            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Panel2
             // 
@@ -164,7 +175,7 @@
             this.Panel2.Controls.Add(this.OldFileViewButton);
             this.Panel2.Controls.Add(this.OldAsciiButton);
             this.Panel2.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel2.Location = new System.Drawing.Point(587, 5);
+            this.Panel2.Location = new System.Drawing.Point(586, 5);
             this.Panel2.Name = "Panel2";
             this.Panel2.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.Panel2.Size = new System.Drawing.Size(66, 21);
@@ -218,10 +229,9 @@
             this.NewAsciiContent.Location = new System.Drawing.Point(5, 36);
             this.NewAsciiContent.Name = "NewAsciiContent";
             this.NewAsciiContent.ReadOnly = true;
-            this.NewAsciiContent.ScrollBars = System.Windows.Forms.RichTextBoxScrollBars.Vertical;
             this.NewAsciiContent.ShortcutsEnabled = false;
             this.NewAsciiContent.ShowSelectionMargin = true;
-            this.NewAsciiContent.Size = new System.Drawing.Size(646, 595);
+            this.NewAsciiContent.Size = new System.Drawing.Size(642, 595);
             this.NewAsciiContent.TabIndex = 1;
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
@@ -230,7 +240,7 @@
             // 
             this.panel6.Controls.Add(this.NewChangeColor);
             this.panel6.Dock = System.Windows.Forms.DockStyle.Right;
-            this.panel6.Location = new System.Drawing.Point(651, 36);
+            this.panel6.Location = new System.Drawing.Point(647, 36);
             this.panel6.Name = "panel6";
             this.panel6.Padding = new System.Windows.Forms.Padding(0, 20, 0, 20);
             this.panel6.Size = new System.Drawing.Size(15, 595);
@@ -256,7 +266,7 @@
             this.Panel3.Location = new System.Drawing.Point(5, 5);
             this.Panel3.Name = "Panel3";
             this.Panel3.Padding = new System.Windows.Forms.Padding(5);
-            this.Panel3.Size = new System.Drawing.Size(661, 31);
+            this.Panel3.Size = new System.Drawing.Size(657, 31);
             this.Panel3.TabIndex = 3;
             // 
             // NewAsciiFile
@@ -265,9 +275,21 @@
             this.NewAsciiFile.FormattingEnabled = true;
             this.NewAsciiFile.Location = new System.Drawing.Point(105, 5);
             this.NewAsciiFile.Name = "NewAsciiFile";
-            this.NewAsciiFile.Size = new System.Drawing.Size(486, 21);
+            this.NewAsciiFile.Size = new System.Drawing.Size(482, 21);
             this.NewAsciiFile.TabIndex = 5;
             this.NewAsciiFile.SelectedIndexChanged += new System.EventHandler(this.Dropdown_SelectedIndexChanged);
+            // 
+            // label2
+            // 
+            this.label2.Dock = System.Windows.Forms.DockStyle.Left;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.ForeColor = System.Drawing.Color.White;
+            this.label2.Location = new System.Drawing.Point(5, 5);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(100, 21);
+            this.label2.TabIndex = 6;
+            this.label2.Text = "Newer File:";
+            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // Panel4
             // 
@@ -275,7 +297,7 @@
             this.Panel4.Controls.Add(this.NewFileViewButton);
             this.Panel4.Controls.Add(this.NewAsciiButton);
             this.Panel4.Dock = System.Windows.Forms.DockStyle.Right;
-            this.Panel4.Location = new System.Drawing.Point(591, 5);
+            this.Panel4.Location = new System.Drawing.Point(587, 5);
             this.Panel4.Name = "Panel4";
             this.Panel4.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.Panel4.Size = new System.Drawing.Size(65, 21);
@@ -419,30 +441,6 @@
             this.ViewAsBinaryButtonToollbar.UseVisualStyleBackColor = true;
             this.ViewAsBinaryButtonToollbar.Visible = false;
             this.ViewAsBinaryButtonToollbar.Click += new System.EventHandler(this.ViewAsBinaryButtonToollbar_Click);
-            // 
-            // label1
-            // 
-            this.label1.Dock = System.Windows.Forms.DockStyle.Left;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.ForeColor = System.Drawing.Color.White;
-            this.label1.Location = new System.Drawing.Point(5, 5);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(100, 21);
-            this.label1.TabIndex = 5;
-            this.label1.Text = "Older File:";
-            this.label1.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // label2
-            // 
-            this.label2.Dock = System.Windows.Forms.DockStyle.Left;
-            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.ForeColor = System.Drawing.Color.White;
-            this.label2.Location = new System.Drawing.Point(5, 5);
-            this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(100, 21);
-            this.label2.TabIndex = 6;
-            this.label2.Text = "Newer File:";
-            this.label2.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // StartForm
             // 
