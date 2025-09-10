@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
 		<PropertyGroup>
-				<TargetFrameworks>netstandard2.0;netstandard2.1</TargetFrameworks>
+				<TargetFrameworks>netstandard2.1;net8.0;net481</TargetFrameworks>
 				<ImplicitUsings>disable</ImplicitUsings>
 				<Nullable>disable</Nullable>
 				<EnforceCodeStyleInBuild>True</EnforceCodeStyleInBuild>
@@ -14,9 +14,9 @@
 				<Company>Chizl.com</Company>
 				<Copyright>© 2025 chizl.com</Copyright>
 				<PackageTags>file-compare;library;in-console;on-desktop;netstandard;core;framework;no-deps</PackageTags>
-				<FileVersion>5.08.28.1131</FileVersion>
-				<Version>5.08.28.0</Version>
-				<AssemblyVersion>5.08.0.0</AssemblyVersion>
+				<FileVersion>5.09.10.950</FileVersion>
+				<Version>5.09.10.0</Version>
+				<AssemblyVersion>5.09.0.0</AssemblyVersion>
 		</PropertyGroup>
 
 		<ItemGroup>
@@ -25,4 +25,10 @@
 				<None Remove="Chizl.FileComparer\**" />
 		</ItemGroup>
 
+		<ItemGroup>
+				<PackageReference Include="System.Memory" Version="4.6.3" />
+				<PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" />
+				<PackageReference Include="System.Collections.Concurrent" Version="4.3.0" />
+		</ItemGroup>
+		
 </Project>

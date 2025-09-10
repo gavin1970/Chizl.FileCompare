@@ -2,10 +2,15 @@
 {
     public enum DiffType
     {
-        NotSet,
         None,
         Added,
         Deleted,
         Modified
+    }
+    public enum FileFormat
+    {
+        NotSet,
+        Ascii,
+        Binary,
     }
 }

@@ -2,6 +2,7 @@
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace Chizl.FileCompare
 {
@@ -22,43 +23,24 @@ namespace Chizl.FileCompare
         /// </returns>
         public static ComparisonResults CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
-            var sourceFileInfo = new FileInfo(sourceFile);
-            var targetFileInfo = new FileInfo(targetFile);
+            var sourceFileInfo = new FileLevel(sourceFile);
+            var targetFileInfo = new FileLevel(targetFile);
 
             if (!sourceFileInfo.Exists)
                 return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found or accessible."));
             if (!targetFileInfo.Exists)
                 return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found or accessible."));
 
-            var isSrcBinary = IsBinary(sourceFile, out string errMsg);
-            if (!string.IsNullOrWhiteSpace(errMsg))
-                return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
-
-            var isTrgBinary = IsBinary(targetFile, out errMsg);
-            if (!string.IsNullOrWhiteSpace(errMsg))
-                return new ComparisonResults(new Exception($"{nameof(targetFile)}: {errMsg}"));
-
-            string[] linesOld;
-            string[] linesNew;
+            var isSrcBinary = sourceFileInfo.IsBinary;
+            var isTrgBinary = targetFileInfo.IsBinary;
 
             //if one of them is binary, view them both as binary else both as ascii.
             if (isSrcBinary || isTrgBinary)
-            {
-                return new ComparisonResults(new Exception($"Binary files are not supported at this time."));
-
-                //if (!LoadBinary(sourceFile, out linesOld, out errMsg))
-                //    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
-
-                //if (!LoadBinary(targetFile, out linesNew, out errMsg))
-                //    return new ComparisonResults(new Exception($"{nameof(sourceFile)}: {errMsg}"));
-            }
+                return BinaryComparer.CompareFiles(sourceFileInfo, targetFileInfo);
             else
-            {
-                linesOld = File.ReadAllLines(sourceFile);
-                linesNew = File.ReadAllLines(targetFile);
-            }
-
-            return CompareStringArr(linesOld, linesNew, scoreThreshold, lineLookAhead);
+                return CompareStringArr(File.ReadAllLines(sourceFileInfo.FullPath),
+                                        File.ReadAllLines(targetFileInfo.FullPath), 
+                                        scoreThreshold, lineLookAhead);
         }
         /// <summary>
         /// Compare two ascii strings and return line for line what was added, removed, and modified.<br/>
@@ -108,7 +90,7 @@ namespace Chizl.FileCompare
             BuildRawDiff(lcs, linesOld, linesNew, linesOld.Length, linesNew.Length, rawDiff);
 
             var finalDiff = MergeSimilarChanges(rawDiff, lineLookAhead, scoreThreshold); // 3-line lookahead window
-            DiffType diffType = DiffType.NotSet;
+            DiffType diffType = DiffType.None;
 
             foreach (var entry in finalDiff)
             {
@@ -141,9 +123,9 @@ namespace Chizl.FileCompare
         /// <param name="returnArr"></param>
         /// <param name="errorMsg"></param>
         /// <returns></returns>
-        public static BinaryHexView[] ShowInHex(string fullPath)
+        public static ByteLineLevel[] ShowInHex(string fullPath)
         {
-            var binHexViewList = new List<BinaryHexView>();
+            var binHexViewList = new List<ByteLineLevel>();
 
             try
             {
@@ -152,26 +134,16 @@ namespace Chizl.FileCompare
                     int bytesRead;
                     byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
                     int offset = 0;
-
+                    int lineNo = 1;
                     while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
                     {
-                        var bhView = new BinaryHexView();
+                        var bhView = new ByteLineLevel(FileFormat.Binary, lineNo++);
                         // Display offset
                         bhView.AddOffset($"{offset:X8}:");
 
                         // Display hex values
                         for (int i = 0; i < bytesRead; i++)
-                            bhView.AddHexStr($"{buffer[i]:X2}");
-
-                        // Display ASCII representation (printable characters)
-                        for (int i = 0; i < bytesRead; i++)
-                        {
-                            char c = (char)buffer[i];
-                            if (char.IsControl(c) || char.IsWhiteSpace(c) && c != ' ')
-                                bhView.AddPChar(".");
-                            else
-                                bhView.AddPChar($"{c}");
-                        }
+                            bhView.AddToHexStr((char)buffer[i]);
 
                         binHexViewList.Add(bhView);
                         offset += bytesRead;
@@ -290,46 +262,6 @@ namespace Chizl.FileCompare
                 return BuildHighlightedDiff(lcs, a, b, i - 1, j) + "[-" + a[i - 1] + "]";
             }
             return "";
-        }
-        /// <summary>
-        /// Used LINQ.Where().Count()>1 originally, but it's scans the 
-        /// whole buffer while looping is a few milliseconds faster.
-        /// </summary>
-        private static bool IsBinary(string fullPath, out string errorMsg)
-        {
-            const int CharsToCheck = 1024;
-            int nullCount = 0;
-            errorMsg = string.Empty;
-
-            try
-            {
-                using (var fs = File.OpenRead(fullPath))
-                {
-                    byte[] buffer = new byte[CharsToCheck];
-                    int bytesRead = fs.Read(buffer, 0, CharsToCheck);
-
-                    for (int i = 0; i < bytesRead; i++)
-                    {
-                        if (buffer[i] == '\0')
-                        {
-                            nullCount++;
-
-                            // There are some malformed ascii text files with 1
-                            // string terminator.  So we look for more than 1.
-                            // Its been found, most of the time at the end of the file.
-                            if (nullCount > 1)
-                                // Found more than one string terminator, most definitely binary
-                                return true;
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                errorMsg = $"IsBinary('{fullPath}') Exception:\n{ex.Message}";
-            }
-
-            return false; // Found one or less null, likely text
         }
     }
 }

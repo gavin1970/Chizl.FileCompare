@@ -49,6 +49,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="components\CustomRichTextBox.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="constants\ExternApi.cs" />
     <Compile Include="StartForm.cs">
       <SubType>Form</SubType>
@@ -73,6 +76,7 @@
     <EmbeddedResource Include="StartForm.resx">
       <DependentUpon>StartForm.cs</DependentUpon>
     </EmbeddedResource>
+    <None Include="packages.config" />
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -82,20 +86,20 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="testfiles\binary.new">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Chizl.FileCompare.csproj">
-      <Project>{24318b3e-0b71-4241-91ea-1c4ac422d8b0}</Project>
-      <Name>Chizl.FileCompare</Name>
-    </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="Resources\AddButton_128x128.png" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="testfiles\binary.old">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
     <None Include="testfiles\test_new.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -106,9 +110,17 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <Content Include="compare.ico" />
+    <Content Include="compare.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <None Include="Resources\binary_wheel.png" />
     <None Include="Resources\view_on.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Chizl.FileCompare.csproj">
+      <Project>{24318b3e-0b71-4241-91ea-1c4ac422d8b0}</Project>
+      <Name>Chizl.FileCompare</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

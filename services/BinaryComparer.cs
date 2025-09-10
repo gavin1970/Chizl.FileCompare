@@ -1,0 +1,252 @@
+﻿using System;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Diagnostics;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
+
+namespace Chizl.FileCompare
+{
+    internal static class BinaryComparer
+    {
+        const int _foreSight = 16;
+
+        public static ComparisonResults CompareFiles(FileLevel sourceFile, FileLevel targetFile)
+        {
+            byte[] fileOrg = File.ReadAllBytes(sourceFile.FullPath);
+            byte[] fileMod = File.ReadAllBytes(targetFile.FullPath);
+
+            var arrDiffs = new List<CompareDiff>();
+            var modLen = targetFile.Size.Format_Raw;
+            var maxSize = Math.Max(sourceFile.Size.Format_Raw, targetFile.Size.Format_Raw);
+
+            var compDiff = new CompareDiff(Encoding.UTF8);
+            
+            while (maxSize > targetFile.Pointer && maxSize > sourceFile.Pointer)
+            {
+                var trgReadLen = Math.Min(_foreSight, targetFile.Size.Format_Raw - targetFile.Pointer);
+                var srcReadLen = Math.Min(_foreSight, sourceFile.Size.Format_Raw - sourceFile.Pointer);
+
+                var trgSpan = fileMod.AsSpan(targetFile.Pointer, trgReadLen);
+                var srcSpan = fileOrg.AsSpan(sourceFile.Pointer, srcReadLen);
+
+                if (trgSpan.SequenceEqual(srcSpan))
+                {
+                    arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, trgSpan.ToArray()));
+                    compDiff = new CompareDiff(Encoding.UTF8);
+
+                    targetFile.Pointer += trgReadLen;
+                    sourceFile.Pointer += srcReadLen;
+                }
+                else
+                {
+                    int initModIndex = targetFile.Pointer;
+                    int initOrgIndex = sourceFile.Pointer;
+
+                    while (initModIndex < targetFile.Size.Format_Raw &&
+                           initOrgIndex < fileOrg.Length &&
+                           fileMod[initModIndex] == fileOrg[initOrgIndex])
+                    {
+                        initModIndex++;
+                        initOrgIndex++;
+                    }
+
+                    if (initModIndex > targetFile.Pointer)
+                    {
+                        var matchedSpan = fileMod.AsSpan(targetFile.Pointer, initModIndex - targetFile.Pointer);
+                        arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, matchedSpan.ToArray()));
+                        compDiff = new CompareDiff(Encoding.UTF8);
+
+                        //adding
+                        targetFile.Pointer = initModIndex;
+                        sourceFile.Pointer = initOrgIndex;
+                        continue;
+                    }
+
+                    targetFile.Pointer = initModIndex;
+                    sourceFile.Pointer = initOrgIndex;
+
+                    if (!FindMatch(fileMod, targetFile.Pointer, fileOrg, sourceFile.Pointer, out int foundNext))
+                    {
+                        if (!FindMatch(fileOrg, sourceFile.Pointer, fileMod, targetFile.Pointer, out foundNext))
+                        {
+                            if (foundNext <= sourceFile.Pointer)
+                                foundNext = sourceFile.Pointer + 1;
+                            if (sourceFile.Pointer >= fileOrg.Length)
+                            {
+                                if (targetFile.Pointer >= targetFile.Size.Format_Raw)
+                                    break;
+
+                                var addedSpan = fileMod.AsSpan(targetFile.Pointer, targetFile.Size.Format_Raw - targetFile.Pointer);
+                                arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
+                                break;
+                            }
+
+                            var deletedSpan = fileOrg.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
+                            arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, deletedSpan.ToArray()));
+                            sourceFile.Pointer = foundNext;
+                        }
+                        else
+                        {
+                            if (foundNext <= targetFile.Pointer)
+                                foundNext = targetFile.Pointer + 1;
+                            if (targetFile.Pointer >= targetFile.Size.Format_Raw)
+                            {
+                                if (sourceFile.Pointer >= targetFile.Size.Format_Raw)
+                                    break;
+
+                                var deletedSpan2 = fileOrg.AsSpan(sourceFile.Pointer, fileOrg.Length - sourceFile.Pointer);
+                                arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, deletedSpan2.ToArray()));
+                                break;
+                            }
+
+                            var addedSpan = fileMod.AsSpan(targetFile.Pointer, foundNext - targetFile.Pointer);
+                            arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
+                            targetFile.Pointer = foundNext;
+                        }
+                    }
+                    else
+                    {
+                        if (sourceFile.Pointer >= fileOrg.Length)
+                        {
+                            if (targetFile.Pointer >= targetFile.Size.Format_Raw)
+                                break;
+
+                            var addedSpan = fileMod.AsSpan(targetFile.Pointer, targetFile.Size.Format_Raw - targetFile.Pointer);
+                            arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
+                            break;
+                        }
+
+                        var matchedSpan = fileOrg.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
+                        arrDiffs.Add(new CompareDiff(DiffType.None, sourceFile.Pointer, matchedSpan.ToArray()));
+                        sourceFile.Pointer = foundNext;
+                    }
+                }
+            }
+
+            return new ComparisonResults(arrDiffs, true);
+        }
+
+        private static ConcurrentDictionary<string, int> BuildHashLookup(byte[] byteData, int start, int length, byte startingByte)
+        {
+            ConcurrentDictionary<string, int> retVal = new ConcurrentDictionary<string, int>();
+            var maxLoopCount = length * 2;
+
+            for (int i = start; i < byteData.Length; i++, maxLoopCount--)
+            {
+                while (i < byteData.Length && byteData[i] != startingByte) i++;
+
+                if (i == byteData.Length)
+                    break;
+
+                while (byteData.Length - 1 < i + length)
+                    length--;
+
+                var bytes = byteData.Skip(i).Take(length).ToArray();
+                retVal.TryAdd(GetHashString(bytes), i);
+
+                //if (maxLoopCount <= 0 || retVal.Count == length)
+                if (maxLoopCount <= 0 || retVal.Count == (length * 2))
+                    break;
+            }
+
+            return retVal;
+        }
+        private static bool FindMatch(byte[] srcBytes, int srcIndex, byte[] trgBytes, int trgIndex, out int srcNext)
+        {
+            int byteMatch = _foreSight; // adjustable during search.
+
+            int initSrcIndex = srcIndex;
+            int initTrgIndex = trgIndex;
+
+            bool hasStarted = false;
+            srcNext = srcIndex;
+
+            if (initSrcIndex >= srcBytes.Length || initTrgIndex >= trgBytes.Length)
+                return false;
+
+            while (srcBytes[initSrcIndex].Equals(trgBytes[initTrgIndex]))
+            {
+                initSrcIndex++;
+                initTrgIndex++;
+            }
+
+            int orgInitSrcIndex = initSrcIndex;
+            int orgInitTrgIndex = initTrgIndex;
+
+            var sizeSearch = 8;
+            if (initSrcIndex + sizeSearch > srcBytes.Length)
+                sizeSearch = srcBytes.Length - initSrcIndex;
+
+            var searchSrcBytes = srcBytes.AsSpan(initSrcIndex, sizeSearch).ToArray();
+            var quickSearch = GetHashString(searchSrcBytes);
+            var hashLookupData = BuildHashLookup(trgBytes, initTrgIndex, sizeSearch, srcBytes[initSrcIndex]);
+
+            if (hashLookupData.TryGetValue(quickSearch, out var index))
+            {
+                srcNext = index;
+                return true;
+            }
+
+            // when 'sizeSearch' byte grouping isn't found, lets try '_foreSight' byte,
+            // that adjusts in half each round and has a 1 byte slide.
+            while (byteMatch > 2)
+            {
+                hasStarted = false;
+                if (initSrcIndex + byteMatch > srcBytes.Length)
+                    byteMatch = srcBytes.Length - initSrcIndex;
+
+                var searchForBytes = srcBytes.AsSpan(initSrcIndex, byteMatch);
+                for (var i = 0; i < _foreSight - byteMatch; i++)
+                {
+                    var ndx = initTrgIndex + i;
+                    if (trgBytes.Length < ndx + byteMatch)
+                        break;
+
+                    //searching 4 byte chunk matches
+                    var curBytes = trgBytes.AsSpan(ndx, byteMatch);
+                    var isEqual = searchForBytes.SequenceEqual(curBytes);
+
+                    if (!hasStarted && !isEqual)
+                        hasStarted = true;
+                    else if (hasStarted && isEqual)
+                    {
+                        if (index != ndx && index != 0)
+                            Debug.WriteLine("Break");
+                        srcNext = ndx;
+                        return true;
+                    }
+                }
+
+                if (srcNext > srcIndex)
+                    return true;
+                else
+                {
+                    //reset with new byteMatch
+                    initSrcIndex = orgInitSrcIndex;
+                    initTrgIndex = orgInitTrgIndex;
+
+                    byteMatch /= 2;
+                }
+            }
+
+            return false;
+        }
+        private static string GetHashString(params byte[] data) => ComputeHash(data).ToString("X2");
+        private static int ComputeHash(params byte[] data)
+        {
+            unchecked
+            {
+                const int p = 16777619;
+                int hash = (int)2166136261;
+
+                for (int i = 0; i < data.Length; i++)
+                    hash = (hash ^ data[i]) * p;
+
+                return hash;
+            }
+        }
+
+    }
+}

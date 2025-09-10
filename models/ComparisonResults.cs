@@ -11,10 +11,12 @@ namespace Chizl.FileCompare
         { 
             HasException = true;
             IsEmpty = true; 
-            Exception = ex; 
+            Exception = ex;
+            IsBinary = false;
         }
-        internal ComparisonResults(List<CompareDiff> compareDiffs)
+        internal ComparisonResults(List<CompareDiff> compareDiffs, bool isBinary = false)
         {
+            this.IsBinary = isBinary;
             this.LineComparison = compareDiffs.ToArray();
             this.Diffs = new DiffCounts(
                 compareDiffs.Where(w => w.DiffType == DiffType.Added).Count(),
@@ -26,6 +28,7 @@ namespace Chizl.FileCompare
 
         public static ComparisonResults Empty { get; } = new ComparisonResults();
         public bool IsEmpty { get; } = false;
+        public bool IsBinary { get; } = false;
         public bool HasException { get; } = false;
 
         public Exception Exception { get; } = new Exception();
