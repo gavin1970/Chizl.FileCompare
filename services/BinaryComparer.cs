@@ -1,5 +1,4 @@
 ﻿using System;
-using System.IO;
 using System.Linq;
 using System.Text;
 using System.Diagnostics;
@@ -14,22 +13,20 @@ namespace Chizl.FileCompare
 
         public static ComparisonResults CompareFiles(FileLevel sourceFile, FileLevel targetFile)
         {
-            byte[] fileOrg = File.ReadAllBytes(sourceFile.FullPath);
-            byte[] fileMod = File.ReadAllBytes(targetFile.FullPath);
-
             var arrDiffs = new List<CompareDiff>();
-            var modLen = targetFile.Size.Format_Raw;
-            var maxSize = Math.Max(sourceFile.Size.Format_Raw, targetFile.Size.Format_Raw);
+            var trgLen = targetFile.Size.Format_Raw;
+            var srcLen = sourceFile.Size.Format_Raw;
+            var maxSize = Math.Max(srcLen, trgLen);
 
             var compDiff = new CompareDiff(Encoding.UTF8);
             
             while (maxSize > targetFile.Pointer && maxSize > sourceFile.Pointer)
             {
-                var trgReadLen = Math.Min(_foreSight, targetFile.Size.Format_Raw - targetFile.Pointer);
-                var srcReadLen = Math.Min(_foreSight, sourceFile.Size.Format_Raw - sourceFile.Pointer);
+                var trgReadLen = Math.Min(_foreSight, trgLen - targetFile.Pointer);
+                var srcReadLen = Math.Min(_foreSight, srcLen - sourceFile.Pointer);
 
-                var trgSpan = fileMod.AsSpan(targetFile.Pointer, trgReadLen);
-                var srcSpan = fileOrg.AsSpan(sourceFile.Pointer, srcReadLen);
+                var trgSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, trgReadLen);
+                var srcSpan = sourceFile.Bytes.AsSpan(sourceFile.Pointer, srcReadLen);
 
                 if (trgSpan.SequenceEqual(srcSpan))
                 {
@@ -44,9 +41,9 @@ namespace Chizl.FileCompare
                     int initModIndex = targetFile.Pointer;
                     int initOrgIndex = sourceFile.Pointer;
 
-                    while (initModIndex < targetFile.Size.Format_Raw &&
-                           initOrgIndex < fileOrg.Length &&
-                           fileMod[initModIndex] == fileOrg[initOrgIndex])
+                    while (initModIndex < trgLen &&
+                           initOrgIndex < srcLen &&
+                           targetFile.Bytes[initModIndex] == sourceFile.Bytes[initOrgIndex])
                     {
                         initModIndex++;
                         initOrgIndex++;
@@ -54,7 +51,7 @@ namespace Chizl.FileCompare
 
                     if (initModIndex > targetFile.Pointer)
                     {
-                        var matchedSpan = fileMod.AsSpan(targetFile.Pointer, initModIndex - targetFile.Pointer);
+                        var matchedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, initModIndex - targetFile.Pointer);
                         arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, matchedSpan.ToArray()));
                         compDiff = new CompareDiff(Encoding.UTF8);
 
@@ -67,23 +64,23 @@ namespace Chizl.FileCompare
                     targetFile.Pointer = initModIndex;
                     sourceFile.Pointer = initOrgIndex;
 
-                    if (!FindMatch(fileMod, targetFile.Pointer, fileOrg, sourceFile.Pointer, out int foundNext))
+                    if (!FindMatch(targetFile.Bytes, targetFile.Pointer, sourceFile.Bytes, sourceFile.Pointer, out int foundNext))
                     {
-                        if (!FindMatch(fileOrg, sourceFile.Pointer, fileMod, targetFile.Pointer, out foundNext))
+                        if (!FindMatch(sourceFile.Bytes, sourceFile.Pointer, targetFile.Bytes, targetFile.Pointer, out foundNext))
                         {
                             if (foundNext <= sourceFile.Pointer)
                                 foundNext = sourceFile.Pointer + 1;
-                            if (sourceFile.Pointer >= fileOrg.Length)
+                            if (sourceFile.Pointer >= sourceFile.Bytes.Length)
                             {
-                                if (targetFile.Pointer >= targetFile.Size.Format_Raw)
+                                if (targetFile.Pointer >= trgLen)
                                     break;
 
-                                var addedSpan = fileMod.AsSpan(targetFile.Pointer, targetFile.Size.Format_Raw - targetFile.Pointer);
+                                var addedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, trgLen - targetFile.Pointer);
                                 arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
                                 break;
                             }
 
-                            var deletedSpan = fileOrg.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
+                            var deletedSpan = sourceFile.Bytes.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
                             arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, deletedSpan.ToArray()));
                             sourceFile.Pointer = foundNext;
                         }
@@ -91,34 +88,34 @@ namespace Chizl.FileCompare
                         {
                             if (foundNext <= targetFile.Pointer)
                                 foundNext = targetFile.Pointer + 1;
-                            if (targetFile.Pointer >= targetFile.Size.Format_Raw)
+                            if (targetFile.Pointer >= trgLen)
                             {
-                                if (sourceFile.Pointer >= targetFile.Size.Format_Raw)
+                                if (sourceFile.Pointer >= trgLen)
                                     break;
 
-                                var deletedSpan2 = fileOrg.AsSpan(sourceFile.Pointer, fileOrg.Length - sourceFile.Pointer);
+                                var deletedSpan2 = sourceFile.Bytes.AsSpan(sourceFile.Pointer, srcLen - sourceFile.Pointer);
                                 arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, deletedSpan2.ToArray()));
                                 break;
                             }
 
-                            var addedSpan = fileMod.AsSpan(targetFile.Pointer, foundNext - targetFile.Pointer);
+                            var addedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, foundNext - targetFile.Pointer);
                             arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
                             targetFile.Pointer = foundNext;
                         }
                     }
                     else
                     {
-                        if (sourceFile.Pointer >= fileOrg.Length)
+                        if (sourceFile.Pointer >= srcLen)
                         {
-                            if (targetFile.Pointer >= targetFile.Size.Format_Raw)
+                            if (targetFile.Pointer >= trgLen)
                                 break;
 
-                            var addedSpan = fileMod.AsSpan(targetFile.Pointer, targetFile.Size.Format_Raw - targetFile.Pointer);
+                            var addedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, trgLen - targetFile.Pointer);
                             arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
                             break;
                         }
 
-                        var matchedSpan = fileOrg.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
+                        var matchedSpan = sourceFile.Bytes.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
                         arrDiffs.Add(new CompareDiff(DiffType.None, sourceFile.Pointer, matchedSpan.ToArray()));
                         sourceFile.Pointer = foundNext;
                     }

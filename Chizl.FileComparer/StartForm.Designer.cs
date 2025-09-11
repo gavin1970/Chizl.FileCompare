@@ -6,6 +6,8 @@
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
+        const string _asciiViewBtnTxt = "&Ascii View";
+        const string _binaryViewBtnTxt = "&Binary View";
 
         /// <summary>
         /// Clean up any resources being used.
@@ -54,6 +56,7 @@
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
             this.ScoreThresholdDropdown = new System.Windows.Forms.ToolStripComboBox();
+            this.OverlayDropdown = new System.Windows.Forms.ToolStripComboBox();
             this.StartFormStatusStrip = new System.Windows.Forms.StatusStrip();
             this.toolStripStatusPadding = new System.Windows.Forms.ToolStripStatusLabel();
             this.StatusText = new System.Windows.Forms.ToolStripStatusLabel();
@@ -113,6 +116,10 @@
             this.OldAsciiContent.TabIndex = 0;
             this.OldAsciiContent.Text = "";
             this.OldAsciiContent.WordWrap = false;
+            this.OldAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
+            this.OldAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
+            this.OldAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
+
             // 
             // panel5
             // 
@@ -180,7 +187,6 @@
             this.Panel2.Padding = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.Panel2.Size = new System.Drawing.Size(66, 21);
             this.Panel2.TabIndex = 3;
-            this.Panel2.Tag = "&Binary View";
             // 
             // OldBinaryViewButton
             // 
@@ -235,6 +241,9 @@
             this.NewAsciiContent.TabIndex = 1;
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
+            this.NewAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
+            this.NewAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
+            this.NewAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
             // 
             // panel6
             // 
@@ -346,7 +355,8 @@
             // 
             this.StartFormMenuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.FileToolStripMenuItem,
-            this.ScoreThresholdDropdown});
+            this.ScoreThresholdDropdown,
+            this.OverlayDropdown});
             this.StartFormMenuStrip.Location = new System.Drawing.Point(0, 0);
             this.StartFormMenuStrip.Name = "StartFormMenuStrip";
             this.StartFormMenuStrip.Size = new System.Drawing.Size(1344, 27);
@@ -388,6 +398,16 @@
             this.ScoreThresholdDropdown.Name = "ScoreThresholdDropdown";
             this.ScoreThresholdDropdown.Size = new System.Drawing.Size(75, 23);
             // 
+            // OverlayDropdown
+            // 
+            this.OverlayDropdown.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.OverlayDropdown.Items.AddRange(new object[] {
+            "Side <-> Side View",
+            "Overlay View"});
+            this.OverlayDropdown.Name = "OverlayDropdown";
+            this.OverlayDropdown.Size = new System.Drawing.Size(121, 23);
+            this.OverlayDropdown.SelectedIndexChanged += new System.EventHandler(this.OverlayDropdown_SelectedIndexChanged);
+            // 
             // StartFormStatusStrip
             // 
             this.StartFormStatusStrip.BackColor = System.Drawing.SystemColors.ControlDarkDark;
@@ -418,7 +438,7 @@
             // 
             // CompareButtonToollbar
             // 
-            this.CompareButtonToollbar.Location = new System.Drawing.Point(131, 1);
+            this.CompareButtonToollbar.Location = new System.Drawing.Point(254, 1);
             this.CompareButtonToollbar.Name = "CompareButtonToollbar";
             this.CompareButtonToollbar.Size = new System.Drawing.Size(75, 25);
             this.CompareButtonToollbar.TabIndex = 5;
@@ -433,7 +453,7 @@
             // 
             // ViewAsBinaryButtonToollbar
             // 
-            this.ViewAsBinaryButtonToollbar.Location = new System.Drawing.Point(212, 1);
+            this.ViewAsBinaryButtonToollbar.Location = new System.Drawing.Point(332, 1);
             this.ViewAsBinaryButtonToollbar.Name = "ViewAsBinaryButtonToollbar";
             this.ViewAsBinaryButtonToollbar.Size = new System.Drawing.Size(75, 25);
             this.ViewAsBinaryButtonToollbar.TabIndex = 6;
@@ -511,6 +531,7 @@
         private System.Windows.Forms.Panel panel6;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.ToolStripComboBox OverlayDropdown;
     }
 }
 

@@ -38,14 +38,12 @@ namespace Chizl.FileCompare
             if (isSrcBinary || isTrgBinary)
                 return BinaryComparer.CompareFiles(sourceFileInfo, targetFileInfo);
             else
-                return CompareStringArr(File.ReadAllLines(sourceFileInfo.FullPath),
-                                        File.ReadAllLines(targetFileInfo.FullPath), 
-                                        scoreThreshold, lineLookAhead);
+                return CompareStringArr(sourceFileInfo.Content, targetFileInfo.Content, scoreThreshold, lineLookAhead);
         }
         /// <summary>
         /// Compare two ascii strings and return line for line what was added, removed, and modified.<br/>
-        /// Each modifiied will have single char brackets around each add or removed.<br/>
-        /// By modifying the score threshold will provide the level of detail you are loooking for.<br/>
+        /// Each modifiied will have single char brackets around each add, modified, or removed.<br/>
+        /// Because this is for small one or two line strings, this defaults the threashold to 10%.<br/>
         /// <code>
         /// Example: 
         ///     var fileComparison = DiffTool.CompareString("abcdefjhijklmnopqrstuvwxyz", "abcdfjhijklemnopqrsuvwxtyz");
@@ -53,6 +51,38 @@ namespace Chizl.FileCompare
         ///         Console.WriteLine(cmpr.LineDiffStr);
         /// Results:
         ///     abcd[-e]fjhijkl[+e]mnopqrs[-t]uvwx[+t]yz
+        ///     
+        /// Binary View:
+        ///     foreach (var cmpr in fileComparison.LineComparison)
+        ///     {
+        ///         var printableText = "";
+        ///         foreach(var byteLevel int cmpr.TextBreakDown)
+        ///         {
+        ///             Console.BackgroundColor = ConsoleColor.Green;
+        ///             switch (byteLevel.DiffType)
+        ///             {
+        ///                 case DiffType.Added:
+        ///                     Console.BackgroundColor = ConsoleColor.Green;
+        ///                     Console.ForegroundColor = ConsoleColor.White;
+        ///                     break;
+        ///                 case DiffType.Deleted:
+        ///                     Console.BackgroundColor = ConsoleColor.Red;
+        ///                     Console.ForegroundColor = ConsoleColor.White;
+        ///                     break;
+        ///                 case DiffType.Modified:
+        ///                     Console.BackgroundColor = ConsoleColor.Yellow;
+        ///                     Console.ForegroundColor = ConsoleColor.Black;
+        ///                     break;
+        ///                 default:
+        ///                     break;
+        ///             }
+        ///             
+        ///             // - "\x1b[0m" - Resets all FG and BG colors from the point of entry and there after until new color is set within the console screen.
+        ///             Console.Write($"{byteLevel.Hex}\x1b[0m ");
+        ///             printableText += byteLevel.Str;
+        ///         }
+        ///         Console.WriteLine($" {printableText}");
+        ///     }
         /// </code>
         /// </summary>
         /// <param name="srcText">Older string to compare</param>
@@ -61,8 +91,13 @@ namespace Chizl.FileCompare
         /// File details and byte by comparison<br/>
         /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
         /// </returns>
-        public static ComparisonResults CompareString(string srcText, string trgText) =>
-            CompareStringArr(new string[] { srcText }, new string[] { trgText }, .10);
+        public static ComparisonResults CompareString(string srcText, string trgText)
+        {
+            var srcLine = srcText.Replace("\r", "").Split('\n');
+            var trgLine = trgText.Replace("\r", "").Split('\n');
+
+            return CompareStringArr(srcLine, trgLine, .10);
+        }
         /// <summary>
         /// Compare two ascii string arrays and return line for line what was added, removed, and modified.<br/>
         /// Each modifiied will have single char brackets around each add or removed.<br/>

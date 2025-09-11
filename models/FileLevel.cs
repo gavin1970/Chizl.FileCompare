@@ -26,12 +26,16 @@ namespace Chizl.FileCompare
                     this.Size = new FileSize(int.MaxValue);
                 else
                     this.Size = new FileSize((int)fi.Length);
+
                 this.Bytes = File.ReadAllBytes(fi.FullName);
+                if (this.Format.Equals(FileFormat.Ascii))
+                    this.Content = File.ReadAllLines(fi.FullName);
                 this.Pointer = 0;
             }
         }
         internal int Pointer { get; set; }
         public byte[] Bytes { get; }
+        public string[] Content { get; }
         public string FullPath { get; }
         public string Name { get; }
         public string Folder { get; }

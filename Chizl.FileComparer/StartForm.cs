@@ -18,6 +18,7 @@ namespace Chizl.FileComparer
     public partial class StartForm : Form
     {
         delegate void NoParmDelegateEvent();
+        delegate void RtbDelegateEvent(RichTextBox srcRtb, RichTextBox trgRtb);
 
         const int OLD_DROPDOWN = 1;
         const int NEW_DROPDOWN = 2;
@@ -41,6 +42,10 @@ namespace Chizl.FileComparer
         private static readonly ConcurrentDictionary<string, int> _fileHistory = new ConcurrentDictionary<string, int>();
         private static ComparisonResults _lastFileComparison = ComparisonResults.Empty;
         private static bool _formResizing = false;
+        private static bool _isSideBySide = true;
+        private static bool _controlDown = false;
+        private static RichTextBox _srcRtb;
+        private static RichTextBox _trgRtb;
 
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
@@ -49,7 +54,7 @@ namespace Chizl.FileComparer
         {
             InitializeComponent();
 
-            if (args.Length>0)
+            if (args.Length > 0)
                 _oldFile = args[0];
             if (args.Length > 1)
                 _newFile = args[1];
@@ -61,6 +66,7 @@ namespace Chizl.FileComparer
             this.OldAsciiFile.Text = File.Exists(_oldFile) ? _oldFile : "";
             this.NewAsciiFile.Text = File.Exists(_newFile) ? _newFile : "";
             this.ScoreThresholdDropdown.Text = "30%";
+            this.OverlayDropdown.SelectedIndex = 0;
 
             // hook up to the scroll handlers for the rich text boxes
             this.OldAsciiContent.VScroll += new EventHandler(this.RichText_VScroll);
@@ -72,14 +78,15 @@ namespace Chizl.FileComparer
             ResetContent();
             LoadHistory();
 
-            if(File.Exists(_fileIconName))
+            if (File.Exists(_fileIconName))
                 this.Icon = Common.GetIcon(_fileIconName);
         }
+
         private void StartForm_ResizeBegin(object sender, EventArgs e) => _formResizing = true;
-        private void StartForm_ResizeEnd(object sender, EventArgs e) 
-        { 
+        private void StartForm_ResizeEnd(object sender, EventArgs e)
+        {
             _formResizing = false;
-            DiffColorScroll();
+            InvalidateAll();
         }
         private void LoadHistory()
         {
@@ -88,7 +95,7 @@ namespace Chizl.FileComparer
 
             if (File.Exists(_fileHistoryName))
             {
-                foreach (var line in File.ReadAllLines(_fileHistoryName)) 
+                foreach (var line in File.ReadAllLines(_fileHistoryName))
                 {
                     var sLine = line.Split('|');
                     if (sLine.Length == 2)
@@ -139,7 +146,7 @@ namespace Chizl.FileComparer
                 ApplyScroll(senderRtb, targetRtb, ScrollBarDirection.SB_HORZ);
             }
         }
-        private void ToolStripMenuItem2_Click(object sender, EventArgs e)=> this.Close();
+        private void ToolStripMenuItem2_Click(object sender, EventArgs e) => this.Close();
         private void OldAsciiButton_Click(object sender, EventArgs e)
         {
             if (Common.GetFilePath(this, "Select Source/Older File", out string fileName))
@@ -169,7 +176,7 @@ namespace Chizl.FileComparer
             var g = e.Graphics;
             var maxPerc = (double)e.ClipRectangle.Height;
             var r = e.ClipRectangle.Width;
-            
+
             Pen addPen = new Pen(Color.Green, 1);
             Pen delPen = new Pen(Color.Red, 1);
             Pen modPen = new Pen(Color.Orange, 1);
@@ -193,13 +200,13 @@ namespace Chizl.FileComparer
 
         private void AddModifiedLine(RichTextBox rb, ByteLevel[] charDiff, bool isNew, bool asHex = false)
         {
-            foreach(var cd in charDiff)
+            foreach (var cd in charDiff)
             {
-                switch(cd.DiffType)
+                switch (cd.DiffType)
                 {
                     case DiffType.Added:
                         if (isNew)
-                            AddText(rb, $"{(asHex ? $"{cd.Hex} " : $"{cd.Char}")}", ADD_COLOR); 
+                            AddText(rb, $"{(asHex ? $"{cd.Hex} " : $"{cd.Char}")}", ADD_COLOR);
                         break;
                     case DiffType.Deleted:
                         if (!isNew)
@@ -261,6 +268,7 @@ namespace Chizl.FileComparer
             ClearRichText();
 
             var prevLineSize = 30;
+            var useBinary = forceBinary || _lastFileComparison.IsBinary;
 
             if (_lastFileComparison.HasException)
             {
@@ -283,7 +291,7 @@ namespace Chizl.FileComparer
             _delPerc.Clear();
             _modPerc.Clear();
 
-            if (!forceBinary && !_lastFileComparison.IsBinary)
+            if (!useBinary)
             {
                 var stringFiller = $"{new string(' ', prevLineSize)}\n";
                 foreach (var cmpr in lines)
@@ -385,11 +393,13 @@ namespace Chizl.FileComparer
 
                         hexString += !nextHasColor && addSpace && hexSize < 16 ? " " : "";
                         stringFiller += !nextHasColor && addSpace && hexSize < 16 ? " " : "";
-                        lastByteWasColor = false;
+                        lastByteWasColor = byteDff.DiffType != DiffType.None;
 
                         switch (byteDff.DiffType)
                         {
                             case DiffType.Added:
+                                _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(hexString, ADD_COLOR);
@@ -403,53 +413,44 @@ namespace Chizl.FileComparer
                                     oldRtfBuilder.Append(hexString, ADD_COLOR);
                                     oldPlainText += byteDff.Str;
                                 }
-                                _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                                lastByteWasColor = true;
+
                                 break;
                             case DiffType.Deleted:
+                                _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(stringFiller, DELETE_COLOR);
                                     newPlainText += "-";
-                                    oldRtfBuilder.Append(hexString, DELETE_COLOR);
-                                    oldPlainText += byteDff.Str;
                                 }
-                                else
-                                {
-                                    oldRtfBuilder.Append(hexString, DELETE_COLOR);
-                                    oldPlainText += byteDff.Str;
-                                }
-                                _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                                lastByteWasColor = true;
+
+                                oldRtfBuilder.Append(hexString, DELETE_COLOR);
+                                oldPlainText += byteDff.Str;
+
                                 break;
                             case DiffType.Modified:
+                                _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(hexString, MODIFIED_COLOR);
-                                    oldRtfBuilder.Append(hexString, MODIFIED_COLOR);
                                     newPlainText += byteDff.Str;
-                                    oldPlainText += byteDff.Str;
                                 }
-                                else
-                                {
-                                    oldRtfBuilder.Append(hexString);   //binary level shouldn't have Modified
-                                    oldPlainText += byteDff.Str;
-                                }
-                                _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
+                                oldRtfBuilder.Append(hexString, MODIFIED_COLOR);
+                                oldPlainText += byteDff.Str;
+
                                 break;
                             default:
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(hexString);
-                                    oldRtfBuilder.Append(hexString);
                                     newPlainText += byteDff.Str;
-                                    oldPlainText += byteDff.Str;
                                 }
-                                else
-                                {
-                                    oldRtfBuilder.Append(hexString);
-                                    oldPlainText += byteDff.Str;
-                                }
+
+                                oldRtfBuilder.Append(hexString);
+                                oldPlainText += byteDff.Str;
+
                                 break;
                         }
 
@@ -483,19 +484,15 @@ namespace Chizl.FileComparer
                 newRtfBuilder.AppendLine($"  {newPlainText}");
 
                 this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
-                if (!sideBySide)
-                    this.SplitContainer1.Panel2Collapsed = true;
-                else
-                {
-                    this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
-                    //SetCurrentFontSize(this.NewAsciiContent);
-                }
 
-                //SetCurrentFontSize(this.OldAsciiContent);
+                if (sideBySide || !useBinary)
+                    this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
             }
 
+            this.SplitContainer1.Panel2Collapsed = !sideBySide && useBinary;
+
             EnableButtons();
-            DiffColorScroll();
+            InvalidateAll();
         }
         private void CompareFiles()
         {
@@ -530,19 +527,19 @@ namespace Chizl.FileComparer
                 //Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists, check existing
                 //value and if New File dropdown (2), make it 3, to represent both Old and New should have it.
                 //If existing value isn't 2, leave it as it, because 1 or 3 already exists.
-                _fileHistory.AddOrUpdate(this.OldAsciiFile.Text.Trim(), OLD_DROPDOWN, 
+                _fileHistory.AddOrUpdate(this.OldAsciiFile.Text.Trim(), OLD_DROPDOWN,
                     (key, existingValue) => { return existingValue == NEW_DROPDOWN ? OLD_NEW_DROPDOWN : existingValue; });
 
                 //Add 2 as the value, to represent New File downdown component.  If Key already exists, check existing
                 //value and if Old File dropdown (1), make it 3, to represent both Old and New should have it.
                 //If existing value isn't 1, leave it as it, because 2 or 3 already exists.
-                _fileHistory.AddOrUpdate(this.NewAsciiFile.Text.Trim(), NEW_DROPDOWN, 
+                _fileHistory.AddOrUpdate(this.NewAsciiFile.Text.Trim(), NEW_DROPDOWN,
                     (key, existingValue) => { return existingValue == OLD_DROPDOWN ? OLD_NEW_DROPDOWN : existingValue; });
 
                 _lastFileComparison = DiffTool.CompareFiles(this.OldAsciiFile.Text, this.NewAsciiFile.Text, score_threshold, 3);
                 this.ViewAsBinaryButtonToollbar.Visible = !_lastFileComparison.IsBinary;
 
-                ShowComparison();
+                ShowComparison(false, _isSideBySide);
                 UpdateHistoryFile();
             }
         }
@@ -552,10 +549,11 @@ namespace Chizl.FileComparer
             var fHistory = _fileHistory.Select(k => $"{k.Key}|{k.Value}").ToArray();
             File.WriteAllLines(_fileHistoryName, fHistory);
         }
-        private void DiffColorScroll()
+        private void InvalidateAll()
         {
             this.OldChangeColor.Invalidate();
             this.NewChangeColor.Invalidate();
+            this.Invalidate();
         }
         private void OpenExplorerAndSelectFile(string filePath)
         {
@@ -577,7 +575,7 @@ namespace Chizl.FileComparer
 
             if (rtb.Name.StartsWith("Old"))
             {
-                if(SplitContainer1.Panel2Collapsed)
+                if (SplitContainer1.Panel2Collapsed)
                 {
                     SplitContainer1.Panel2Collapsed = false;
                     //SetFontSize(arrayList[0], rtb);
@@ -614,7 +612,7 @@ namespace Chizl.FileComparer
         private void ResetContent(bool binaryButtonOnly = false)
         {
             this.ViewAsBinaryButtonToollbar.Visible = false;
-            this.ViewAsBinaryButtonToollbar.Text = "&Binary View";
+            this.ViewAsBinaryButtonToollbar.Text = _binaryViewBtnTxt;
 
             if (binaryButtonOnly)
                 return;
@@ -630,6 +628,7 @@ namespace Chizl.FileComparer
             this.NewAsciiContent.ScrollBars = RichTextBoxScrollBars.Both;
 
             EnableButtons();
+            InvalidateAll();
         }
         private void ClearRichText()
         {
@@ -722,22 +721,48 @@ namespace Chizl.FileComparer
         }
         private void ViewAsBinaryButtonToollbar_Click(object sender, EventArgs e)
         {
-            if (ViewAsBinaryButtonToollbar.Text == "&Binary View")
+            if (ViewAsBinaryButtonToollbar.Text == _binaryViewBtnTxt)
             {
-                ViewAsBinaryButtonToollbar.Text = "&Ascii View";
-                ShowComparison(true, true);
+                ViewAsBinaryButtonToollbar.Text = _asciiViewBtnTxt;
+                ShowComparison(true, _isSideBySide);
             }
             else
             {
-                ViewAsBinaryButtonToollbar.Text = "&Binary View";
-                ShowComparison(false);
+                ViewAsBinaryButtonToollbar.Text = _binaryViewBtnTxt;
+                ShowComparison(false, true);    //Ascii is always Side By Side, 
             }
         }
-        private void Dropdown_SelectedIndexChanged(object sender, EventArgs e)=> ViewAsBinaryButtonToollbar.Visible = false;
+        private void Dropdown_SelectedIndexChanged(object sender, EventArgs e) => ViewAsBinaryButtonToollbar.Visible = false;
         private void ResetTimer_Tick(object sender, EventArgs e)
         {
             ResetTimer.Enabled = false;
             StatusText.BackColor = SystemColors.ControlDark;
         }
+        private void OverlayDropdown_SelectedIndexChanged(object sender, EventArgs e) => _isSideBySide = OverlayDropdown.SelectedIndex.Equals(0);
+
+        /// <summary>
+        /// Use to sync up ZoomFactor between RichTextBoxes.
+        /// </summary>
+        private void ZoomCheck_KeyDown(object sender,  KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.ControlKey)
+            {
+                _controlDown = true;
+                _srcRtb = (RichTextBox)sender;
+                _trgRtb = _srcRtb.Name.Equals("OldAsciiContent") ? NewAsciiContent : OldAsciiContent;
+            }
+        }
+        private void ZoomCheck_KeyUp(object sender, KeyEventArgs e)
+        {
+            if (_trgRtb == null || _srcRtb == null)
+                return;
+
+            if (e.KeyCode.Equals(Keys.ControlKey))
+            {
+                _controlDown = false;
+                _trgRtb.ZoomFactor = _srcRtb.ZoomFactor;
+            }
+        }
+        private void Content_Leave(object sender, EventArgs e) => ZoomCheck_KeyUp(sender, new KeyEventArgs(Keys.ControlKey));
     }
 }

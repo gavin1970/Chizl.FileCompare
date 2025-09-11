@@ -14,15 +14,18 @@
 				<Company>Chizl.com</Company>
 				<Copyright>© 2025 chizl.com</Copyright>
 				<PackageTags>file-compare;library;in-console;on-desktop;netstandard;core;framework;no-deps</PackageTags>
-				<FileVersion>5.09.10.1144</FileVersion>
-				<Version>5.09.10.0</Version>
+				<FileVersion>5.09.11.1216</FileVersion>
+				<Version>5.09.11.0</Version>
 				<AssemblyVersion>5.09.0.0</AssemblyVersion>
 		</PropertyGroup>
 
 		<ItemGroup>
 				<Compile Remove="Chizl.FileComparer\**" />
+				<Compile Remove="src\**" />
 				<EmbeddedResource Remove="Chizl.FileComparer\**" />
+				<EmbeddedResource Remove="src\**" />
 				<None Remove="Chizl.FileComparer\**" />
+				<None Remove="src\**" />
 		</ItemGroup>
 
 		<ItemGroup>
