@@ -43,7 +43,6 @@ namespace Chizl.FileComparer
         private static ComparisonResults _lastFileComparison = ComparisonResults.Empty;
         private static bool _formResizing = false;
         private static bool _isSideBySide = true;
-        private static bool _controlDown = false;
         private static RichTextBox _srcRtb;
         private static RichTextBox _trgRtb;
 
@@ -298,7 +297,7 @@ namespace Chizl.FileComparer
                 {
                     scrollLineMarker++;
 
-                    var lineNumber = $"{cmpr.LineNumber.ToString("0000")}: ";
+                    var lineNumber = $"{cmpr.LineNumber:0000}: ";
                     var lineString = $"{cmpr.LineDiffStr}";
 
                     //removing any extra that might be residing..
@@ -747,7 +746,6 @@ namespace Chizl.FileComparer
         {
             if (e.KeyCode == Keys.ControlKey)
             {
-                _controlDown = true;
                 _srcRtb = (RichTextBox)sender;
                 _trgRtb = _srcRtb.Name.Equals("OldAsciiContent") ? NewAsciiContent : OldAsciiContent;
             }
@@ -758,10 +756,7 @@ namespace Chizl.FileComparer
                 return;
 
             if (e.KeyCode.Equals(Keys.ControlKey))
-            {
-                _controlDown = false;
                 _trgRtb.ZoomFactor = _srcRtb.ZoomFactor;
-            }
         }
         private void Content_Leave(object sender, EventArgs e) => ZoomCheck_KeyUp(sender, new KeyEventArgs(Keys.ControlKey));
     }
