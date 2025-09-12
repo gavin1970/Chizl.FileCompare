@@ -14,8 +14,8 @@ namespace Chizl.FileCompare
         public static ComparisonResults CompareFiles(FileLevel sourceFile, FileLevel targetFile)
         {
             var arrDiffs = new List<CompareDiff>();
-            var trgLen = targetFile.Size.Format_Raw;
-            var srcLen = sourceFile.Size.Format_Raw;
+            var trgLen = targetFile.Size.Format_ByteSize;
+            var srcLen = sourceFile.Size.Format_ByteSize;
             var maxSize = Math.Max(srcLen, trgLen);
 
             var compDiff = new CompareDiff(Encoding.UTF8);
@@ -125,7 +125,7 @@ namespace Chizl.FileCompare
             return new ComparisonResults(arrDiffs, true);
         }
 
-        private static ConcurrentDictionary<string, int> BuildHashLookup(byte[] byteData, int start, int length, byte startingByte)
+        private static ConcurrentDictionary<string, int> BuildHashLookups(byte[] byteData, int start, int length, byte startingByte)
         {
             ConcurrentDictionary<string, int> retVal = new ConcurrentDictionary<string, int>();
             var maxLoopCount = length * 2;
@@ -141,7 +141,7 @@ namespace Chizl.FileCompare
                     length--;
 
                 var bytes = byteData.Skip(i).Take(length).ToArray();
-                retVal.TryAdd(GetHashString(bytes), i);
+                retVal.TryAdd(Common.GetHashString(bytes), i);
 
                 //if (maxLoopCount <= 0 || retVal.Count == length)
                 if (maxLoopCount <= 0 || retVal.Count == (length * 2))
@@ -150,6 +150,7 @@ namespace Chizl.FileCompare
 
             return retVal;
         }
+
         private static bool FindMatch(byte[] srcBytes, int srcIndex, byte[] trgBytes, int trgIndex, out int srcNext)
         {
             int byteMatch = _foreSight; // adjustable during search.
@@ -177,8 +178,8 @@ namespace Chizl.FileCompare
                 sizeSearch = srcBytes.Length - initSrcIndex;
 
             var searchSrcBytes = srcBytes.AsSpan(initSrcIndex, sizeSearch).ToArray();
-            var quickSearch = GetHashString(searchSrcBytes);
-            var hashLookupData = BuildHashLookup(trgBytes, initTrgIndex, sizeSearch, srcBytes[initSrcIndex]);
+            var quickSearch = Common.GetHashString(searchSrcBytes);
+            var hashLookupData = BuildHashLookups(trgBytes, initTrgIndex, sizeSearch, srcBytes[initSrcIndex]);
 
             if (hashLookupData.TryGetValue(quickSearch, out var index))
             {
@@ -230,20 +231,5 @@ namespace Chizl.FileCompare
 
             return false;
         }
-        private static string GetHashString(params byte[] data) => ComputeHash(data).ToString("X2");
-        private static int ComputeHash(params byte[] data)
-        {
-            unchecked
-            {
-                const int p = 16777619;
-                int hash = (int)2166136261;
-
-                for (int i = 0; i < data.Length; i++)
-                    hash = (hash ^ data[i]) * p;
-
-                return hash;
-            }
-        }
-
     }
 }

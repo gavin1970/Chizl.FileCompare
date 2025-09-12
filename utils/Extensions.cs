@@ -34,6 +34,16 @@ namespace Chizl.FileCompare
         /// <returns>true: each byte in the array is identical.  false: the two arrays are not identical.</returns>
         public static bool EqualTo(this byte[] @this, byte[] byteArr2) => @this.Where((x, i) => i < byteArr2.Length && x != byteArr2[i]).Count().Equals(0);
         public static bool EqualTo(this ReadOnlySpan<byte> span, ReadOnlySpan<byte> other) => span.SequenceEqual(other); // super fast, optimized in the runtime
+        /// <summary>
+        /// Convert byte to char based on encoding to use.
+        /// </summary>
+        /// <param name="b"></param>
+        /// <param name="encoding"></param>
+        /// <returns></returns>
         public static char ToChar(this byte b, Encoding encoding) => encoding.GetString(new byte[] { b })[0];
+        public static string ReplaceCrLf(this string @this, char replaceWith) => 
+                        !string.IsNullOrEmpty(@this) 
+                            ? @this.Replace("\r", replaceWith.ToString()).Replace("\n", replaceWith.ToString()) 
+                            : @this;
     }
 }

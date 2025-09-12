@@ -126,10 +126,11 @@ namespace Chizl.FileCompare
 
             var finalDiff = MergeSimilarChanges(rawDiff, lineLookAhead, scoreThreshold); // 3-line lookahead window
             DiffType diffType = DiffType.None;
-
+            var prevSize = 0;
             foreach (var entry in finalDiff)
             {
                 lineNo++;
+
                 switch (entry.Tag)
                 {
                     case "+":
@@ -145,7 +146,21 @@ namespace Chizl.FileCompare
                         diffType = DiffType.None;
                         break;
                 }
-                retVal.Add(new CompareDiff(diffType, lineNo, entry.Text));
+
+               
+                //get line
+                var textLine = entry.Text;
+
+                //if line is zero in size and previous was zero in size, force 30 as a length
+                if (prevSize == 0)
+                    prevSize = 30;                  //random
+
+
+                if (textLine.Length == 0)
+                    textLine = new string(' ', prevSize);
+                
+                retVal.Add(new CompareDiff(diffType, lineNo, textLine));
+                prevSize = textLine.Length;
             }
 
             return new ComparisonResults(retVal);

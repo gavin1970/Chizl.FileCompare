@@ -32,7 +32,7 @@ namespace Chizl.FileCompare
                 throw new ArgumentException("Byte level data is required.");
 
             _lineDiffBytes = byteLevelDiff;
-            _lineDiffStr = enc.GetString(byteLevelDiff.Select(s=>s.Byte).ToArray()).Replace("\r", ".").Replace("\n", ".");
+            _lineDiffStr = enc.GetString(byteLevelDiff.Select(s=>s.Byte).ToArray()).ReplaceCrLf('?'); 
             _lineHexString = ToHexString(_lineDiffBytes);
         }
         internal CompareDiff(DiffType diff, int line, ReadOnlySpan<byte> diffSpan) : this(diff, line, _defaultEncoding, diffSpan.ToArray()) { }
@@ -42,14 +42,14 @@ namespace Chizl.FileCompare
                 throw new ArgumentException("Byte data is required.");
 
             _lineDiffBytes = diffArray.Select(s => new ByteLevel(diff, s)).ToArray();
-            _lineDiffStr = enc.GetString(diffArray).Replace("\r", ".").Replace("\n", "."); 
+            _lineDiffStr = enc.GetString(diffArray).ReplaceCrLf('?');
             _lineHexString = ToHexString(_lineDiffBytes);
         }
         internal CompareDiff(DiffType diff, int line, string diffStr) : this(diff, line, _defaultEncoding, diffStr) { }
         internal CompareDiff(DiffType diff, int line, Encoding enc, string diffStr) : this(diff, line, enc)
         {
-            _lineDiffStr = diffStr.Replace("\r", ".").Replace("\n", ".");
-            if (!string.IsNullOrWhiteSpace(diffStr))
+            _lineDiffStr = diffStr.ReplaceCrLf('?');
+            if (diffStr != null && diffStr.Length > 0)
                 _lineDiffBytes = enc.GetBytes(diffStr).Select(s => new ByteLevel(diff, s)).ToArray();
             _lineHexString = ToHexString(_lineDiffBytes);
         }
@@ -62,7 +62,7 @@ namespace Chizl.FileCompare
         /// LineBreakDown is used for Modified lines and will be empty for New, Deleted, or unmodified lines.<br/>
         /// This is the help translate modified lines in a more structured manner.
         /// </summary>
-        public ByteLevel[] TextBreakDown { get { return SetByteLevel(); } }
+        public ByteLevel[] TextBreakDown { get { return GetByteLevel(); } }
         /// <summary>
         /// If CompareDiff wasn't intialized, True will be returned.
         /// </summary>
@@ -99,14 +99,14 @@ namespace Chizl.FileCompare
                 throw new ArgumentException("Byte level data is required.");
 
             _lineDiffBytes = byteLevelDiff;
-            _lineDiffStr = EncodeType.GetString(byteLevelDiff.Select(s => s.Byte).ToArray()).Replace("\r", ".").Replace("\n", "."); 
+            _lineDiffStr = EncodeType.GetString(byteLevelDiff.Select(s => s.Byte).ToArray()).ReplaceCrLf('?');
             _lineHexString = ToHexString(LineDiffBytes);
         }
         /// <summary>
         /// Breaks down the strings, building a list of ByteLevel 
         /// instead of a string being parsed by caller.
         /// </summary>
-        private ByteLevel[] SetByteLevel()
+        private ByteLevel[] GetByteLevel()
         {
             if (_textBreakDown.Length > 0)
                 return _textBreakDown;
