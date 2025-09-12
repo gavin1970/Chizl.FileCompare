@@ -2,7 +2,10 @@
 <img width="1384" alt="image" src="./imgs/winform_ascii_view.png" />
 
 ## About:
-* No Dependencies
+* Dependencies:
+  * &lt;PackageReference Include="System.Memory" Version="4.6.3" /&gt;
+  * &lt;PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="6.1.2" /&gt;
+  * &lt;PackageReference Include="System.Collections.Concurrent" Version="4.3.0" /&gt;
 * (3) Projects:
   * DLL Library: &lt;TargetFrameworks&gt;netstandard2.1;net8.0;net481&lt;/TargetFrameworks&gt;
   * EXE WinForm: .NET Framework 4.8.1
