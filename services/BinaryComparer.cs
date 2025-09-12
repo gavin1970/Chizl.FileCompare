@@ -1,15 +1,16 @@
 ﻿using System;
+using System.Collections.Concurrent;
+using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
 
 namespace Chizl.FileCompare
 {
     internal static class BinaryComparer
     {
         const int _foreSight = 16;
+        static readonly Encoding _encode = Encoding.UTF8;
 
         public static ComparisonResults CompareFiles(FileLevel sourceFile, FileLevel targetFile)
         {
@@ -18,8 +19,6 @@ namespace Chizl.FileCompare
             var srcLen = sourceFile.Size.Format_ByteSize;
             var maxSize = Math.Max(srcLen, trgLen);
 
-            var compDiff = new CompareDiff(Encoding.UTF8);
-            
             while (maxSize > targetFile.Pointer && maxSize > sourceFile.Pointer)
             {
                 var trgReadLen = Math.Min(_foreSight, trgLen - targetFile.Pointer);
@@ -30,8 +29,7 @@ namespace Chizl.FileCompare
 
                 if (trgSpan.SequenceEqual(srcSpan))
                 {
-                    arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, trgSpan.ToArray()));
-                    compDiff = new CompareDiff(Encoding.UTF8);
+                    arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, _encode, trgSpan.ToArray()));
 
                     targetFile.Pointer += trgReadLen;
                     sourceFile.Pointer += srcReadLen;
@@ -52,8 +50,7 @@ namespace Chizl.FileCompare
                     if (initModIndex > targetFile.Pointer)
                     {
                         var matchedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, initModIndex - targetFile.Pointer);
-                        arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, matchedSpan.ToArray()));
-                        compDiff = new CompareDiff(Encoding.UTF8);
+                        arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, _encode, matchedSpan.ToArray()));
 
                         //adding
                         targetFile.Pointer = initModIndex;
@@ -76,12 +73,12 @@ namespace Chizl.FileCompare
                                     break;
 
                                 var addedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, trgLen - targetFile.Pointer);
-                                arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
+                                arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, _encode, addedSpan.ToArray()));
                                 break;
                             }
 
                             var deletedSpan = sourceFile.Bytes.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
-                            arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, deletedSpan.ToArray()));
+                            arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, _encode, deletedSpan.ToArray()));
                             sourceFile.Pointer = foundNext;
                         }
                         else
@@ -94,12 +91,12 @@ namespace Chizl.FileCompare
                                     break;
 
                                 var deletedSpan2 = sourceFile.Bytes.AsSpan(sourceFile.Pointer, srcLen - sourceFile.Pointer);
-                                arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, deletedSpan2.ToArray()));
+                                arrDiffs.Add(new CompareDiff(DiffType.Deleted, sourceFile.Pointer, _encode, deletedSpan2.ToArray()));
                                 break;
                             }
 
                             var addedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, foundNext - targetFile.Pointer);
-                            arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
+                            arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, _encode, addedSpan.ToArray()));
                             targetFile.Pointer = foundNext;
                         }
                     }
@@ -111,12 +108,12 @@ namespace Chizl.FileCompare
                                 break;
 
                             var addedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, trgLen - targetFile.Pointer);
-                            arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, addedSpan.ToArray()));
+                            arrDiffs.Add(new CompareDiff(DiffType.Added, targetFile.Pointer, _encode, addedSpan.ToArray()));
                             break;
                         }
 
                         var matchedSpan = sourceFile.Bytes.AsSpan(sourceFile.Pointer, foundNext - sourceFile.Pointer);
-                        arrDiffs.Add(new CompareDiff(DiffType.None, sourceFile.Pointer, matchedSpan.ToArray()));
+                        arrDiffs.Add(new CompareDiff(DiffType.None, sourceFile.Pointer, _encode, matchedSpan.ToArray()));
                         sourceFile.Pointer = foundNext;
                     }
                 }
@@ -210,8 +207,6 @@ namespace Chizl.FileCompare
                         hasStarted = true;
                     else if (hasStarted && isEqual)
                     {
-                        if (index != ndx && index != 0)
-                            Debug.WriteLine("Break");
                         srcNext = ndx;
                         return true;
                     }

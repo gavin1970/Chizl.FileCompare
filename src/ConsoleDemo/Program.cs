@@ -38,7 +38,7 @@ namespace ConsoleDemo
                 Console.Write($"{line:00000000}{_resetColors} ");
                 line++;
 
-                foreach (var byteLevel in cmpr.TextBreakDown)
+                foreach (var byteLevel in cmpr.ByteByByteDiff)
                 {
                     switch (byteLevel.DiffType)
                     {
@@ -90,7 +90,7 @@ namespace ConsoleDemo
             var printableText = "";
             foreach (var cmpr in fileComparison.LineComparison)
             {
-                foreach (var byteLevel in cmpr.TextBreakDown)
+                foreach (var byteLevel in cmpr.ByteByByteDiff)
                 {
                     if (hexCount == 0)
                     {

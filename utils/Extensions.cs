@@ -6,6 +6,8 @@ namespace Chizl.FileCompare
 {
     internal static class FileCompareExtensions
     {
+        static readonly string[] _validMakePrintableTypes = new string[] { "char", "string" };
+
         /// <summary>
         /// Since netstandard2.0 doesn't have Math.Clamp, this will do it.
         /// </summary>
@@ -41,9 +43,78 @@ namespace Chizl.FileCompare
         /// <param name="encoding"></param>
         /// <returns></returns>
         public static char ToChar(this byte b, Encoding encoding) => encoding.GetString(new byte[] { b })[0];
-        public static string ReplaceCrLf(this string @this, char replaceWith) => 
-                        !string.IsNullOrEmpty(@this) 
-                            ? @this.Replace("\r", replaceWith.ToString()).Replace("\n", replaceWith.ToString()) 
-                            : @this;
+        public static string ReplaceCrLf(this string @this, char replaceWith)
+        {
+            if (string.IsNullOrEmpty(@this))
+                return @this;
+
+            return !string.IsNullOrEmpty(@this)
+                ? @this.Replace("\r", replaceWith.ToString()).Replace("\n", replaceWith.ToString())
+                : @this;
+        }
+        /// <summary>
+        /// Validates the is a printable character and replaces it if not with the "replaceWith" arguement.
+        /// </summary>
+        /// <typeparam name="T">Only string or char accepted, Default: char</typeparam>
+        /// <param name="replaceWith">(Optional) character to use if the char isn't printable. Default: '.'</param>
+        /// <returns>string or char with printable value.</returns>
+        public static T MakePrintable<T>(this char @this, char replaceWith = '.')
+        {
+            if (!_validMakePrintableTypes.Contains(typeof(T).Name.ToLower()))
+                throw new NotSupportedException($"Only cast supported are: ({string.Join(", ", _validMakePrintableTypes)}).");
+
+            var retVal = @this >= 32 && @this <= 126 ? @this : replaceWith;
+            return (T)Convert.ChangeType(retVal, typeof(T));
+        }
+        /// <summary>
+        /// Replaces chars in a string into printable characters by replacing them with the "replaceWith" arguement.
+        /// <code>
+        /// Example:
+        ///     var str = "abc\tdefg\n";
+        ///     Console.Write(str.MakePrintable('@'));
+        /// Results:
+        ///     "abc.defg."
+        /// </code>
+        /// </summary>
+        /// <param name="replaceWith">
+        /// (Optional) character to use if a char isn't printable.  Default: '.'<br/>
+        /// When replaceWith = (char)0, it will replace the character in the string with an blank, "".
+        /// </param>
+        /// <returns>string with printable value.</returns>
+        public static string MakePrintable(this string @this, char replaceWith = '.') => MakeValidRange(@this, (char)32, (char)126, replaceWith);
+
+        /// <summary>
+        /// Replaces chars in a string into "replaceWith" arguement when outside the range of firstValid and lastValid arguements.
+        /// <code>
+        /// Example:
+        ///     var str = "abc\tdefg\n";
+        ///     Console.Write(str.MakeValidRange((char)32, (char)126, '@'));
+        /// Results:
+        ///     "abc.defg."
+        /// </code>
+        /// </summary>
+        /// <param name="firstValid">First valid char of the range.</param>
+        /// <param name="lastValid">Last valid char of the range.</param>
+        /// <param name="replaceWith">
+        /// (Optional) character to use if a char isn't printable.  Default: '.'<br/>
+        /// When replaceWith = (char)0, it will replace the character in the string with an blank, "".
+        /// </param>
+        /// <returns>string with printable value.</returns>
+        public static string MakeValidRange(this string @this, char firstValid, char lastValid, char replaceWith = '.')
+        {
+            if (string.IsNullOrEmpty(@this))
+                return @this;
+
+            var replace = replaceWith.Equals(0) ? "" : replaceWith.ToString();
+
+            if (firstValid >= lastValid)
+                throw new ArgumentException($"{nameof(firstValid)} '{firstValid}' cannot be equal to or after {nameof(lastValid)} '{lastValid}'.");
+
+            var replaceThese = @this.ToCharArray().Distinct().Where(c => (c >= firstValid && c <= lastValid)).Select(s=>$"{s}").ToArray();
+            foreach (var c in replaceThese)
+                @this = @this.Replace(c, replace);
+
+            return @this;
+        }
     }
 }

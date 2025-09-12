@@ -27,9 +27,9 @@ namespace Chizl.FileCompare
             var targetFileInfo = new FileLevel(targetFile);
 
             if (!sourceFileInfo.Exists)
-                return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found or accessible."));
+                return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found and/or accessible."));
             if (!targetFileInfo.Exists)
-                return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found or accessible."));
+                return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found and/or accessible."));
 
             var isSrcBinary = sourceFileInfo.IsBinary;
             var isTrgBinary = targetFileInfo.IsBinary;
@@ -56,7 +56,7 @@ namespace Chizl.FileCompare
         ///     foreach (var cmpr in fileComparison.LineComparison)
         ///     {
         ///         var printableText = "";
-        ///         foreach(var byteLevel int cmpr.TextBreakDown)
+        ///         foreach(var byteLevel int cmpr.ByteByByteDiff)
         ///         {
         ///             Console.BackgroundColor = ConsoleColor.Green;
         ///             switch (byteLevel.DiffType)
@@ -129,8 +129,6 @@ namespace Chizl.FileCompare
             var prevSize = 0;
             foreach (var entry in finalDiff)
             {
-                lineNo++;
-
                 switch (entry.Tag)
                 {
                     case "+":
@@ -159,11 +157,11 @@ namespace Chizl.FileCompare
                 if (textLine.Length == 0)
                     textLine = new string(' ', prevSize);
                 
-                retVal.Add(new CompareDiff(diffType, lineNo, textLine));
+                retVal.Add(new CompareDiff(diffType, ++lineNo, textLine));
                 prevSize = textLine.Length;
             }
 
-            return new ComparisonResults(retVal);
+            return new ComparisonResults(retVal, false);
 
         }
         /// <summary>

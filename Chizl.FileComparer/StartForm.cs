@@ -334,8 +334,8 @@ namespace Chizl.FileComparer
                             break;
                         case DiffType.Modified:
                             _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                            AddModifiedLine(this.OldAsciiContent, cmpr.TextBreakDown, false);
-                            AddModifiedLine(this.NewAsciiContent, cmpr.TextBreakDown, true);
+                            AddModifiedLine(this.OldAsciiContent, cmpr.ByteByByteDiff, false);
+                            AddModifiedLine(this.NewAsciiContent, cmpr.ByteByByteDiff, true);
                             break;
                         default:
                             AddText(this.OldAsciiContent, lineString);
@@ -368,11 +368,11 @@ namespace Chizl.FileComparer
                     scrollLineMarker++;
                     var byteCounter = 0;
 
-                    foreach (var byteDff in cmpr.TextBreakDown)
+                    foreach (var byteDff in cmpr.ByteByByteDiff)
                     {
                         bool nextHasColor = false;
-                        if (byteCounter < cmpr.LineDiffBytes.Length - 1)
-                            nextHasColor = cmpr.LineDiffBytes[byteCounter + 1].DiffType != DiffType.None;
+                        if (byteCounter < cmpr.ByteByByteDiff.Length - 1)
+                            nextHasColor = cmpr.ByteByByteDiff[byteCounter + 1].DiffType != DiffType.None;
 
                         if (hexSize.Equals(0))
                         {

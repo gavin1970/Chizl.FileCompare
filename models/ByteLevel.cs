@@ -16,16 +16,28 @@ namespace Chizl.FileCompare
 
             if (_makeReadable.Contains(byteChar))
                 this.Str = "?";
-            else if (byteChar >= 32)  //&& byteChar <= 126
-                this.Str = this.Char.ToString();
             else
-                this.Str = ".";
+                this.Str = this.Char.MakePrintable<string>('.');
         }
-
+        /// <summary>
+        /// Byte state: None, Added, Modified, Deleted
+        /// </summary>
         public DiffType DiffType { get; } = DiffType.None;
+        /// <summary>
+        /// Char representation of the byte.
+        /// </summary>
         public char Char { get; } = '\0';
+        /// <summary>
+        /// Single character string representation of the byte.
+        /// </summary>
         public string Str { get; } = string.Empty;
+        /// <summary>
+        /// Byte found in file.
+        /// </summary>
         public byte Byte { get; } = 0;
+        /// <summary>
+        /// Hex version of the Byte
+        /// </summary>
         public string Hex { get; } = string.Empty;
     }
 }
