@@ -346,8 +346,13 @@ namespace Chizl.FileComparer
                 _lastFileComparison = DiffTool.CompareFiles(this.OldAsciiFile.Text, this.NewAsciiFile.Text, score_threshold, 3);
                 this.ViewAsBinaryButtonToollbar.Visible = !_lastFileComparison.IsBinary;
 
-                ShowComparison(false, _isSideBySide);
-                UpdateHistoryFile();
+                if (_lastFileComparison.HasException)
+                    MessageBox.Show(this, _lastFileComparison.Exception.Message, About.Title, MessageBoxButtons.OK, MessageBoxIcon.Error);
+                else
+                {
+                    ShowComparison(false, _isSideBySide);
+                    UpdateHistoryFile();
+                }
             }
         }
         private void UpdateHistoryFile()
