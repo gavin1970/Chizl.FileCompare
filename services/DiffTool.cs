@@ -87,23 +87,30 @@ namespace Chizl.FileCompare
             if (string.IsNullOrWhiteSpace(targetFile))
                 return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: cannot be empty."));
 
-            var sourceFileInfo = new FileLevel(sourceFile);
-            var targetFileInfo = new FileLevel(targetFile);
+            try
+            {
+                var sourceFileInfo = new FileLevel(sourceFile);
+                var targetFileInfo = new FileLevel(targetFile);
 
-            if (!sourceFileInfo.Exists)
-                return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found and/or accessible."));
-            if (!targetFileInfo.Exists)
-                return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found and/or accessible."));
+                if (!sourceFileInfo.Exists)
+                    return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found and/or accessible."));
+                if (!targetFileInfo.Exists)
+                    return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found and/or accessible."));
 
-            // Binary path unchanged
-            if (sourceFileInfo.IsBinary || targetFileInfo.IsBinary)
-                return BinaryComparer.CompareFiles(sourceFileInfo, targetFileInfo);
+                // Binary path unchanged
+                if (sourceFileInfo.IsBinary || targetFileInfo.IsBinary)
+                    return BinaryComparer.CompareFiles(sourceFileInfo, targetFileInfo);
 
-            // Read text lines (Myers is O(N+M) memory). If you already have arrays, call CompareStringArr directly.
-            var a = File.ReadLines(sourceFile).ToArray();
-            var b = File.ReadLines(targetFile).ToArray();
+                // Read text lines (Myers is O(N+M) memory). If you already have arrays, call CompareStringArr directly.
+                var a = File.ReadLines(sourceFile).ToArray();
+                var b = File.ReadLines(targetFile).ToArray();
 
-            return CompareStringArr(a, b, scoreThreshold, lineLookAhead);
+                return CompareStringArr(a, b, scoreThreshold, lineLookAhead);
+            }
+            catch (Exception ex) 
+            {
+                return new ComparisonResults(ex);
+            }
         }
         /// <summary>
         /// Builds results off of scripts from Myers, then merges with an LCS to seperate Added, Deleted, and Modified lines.
