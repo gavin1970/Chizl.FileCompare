@@ -82,6 +82,11 @@ namespace Chizl.FileCompare
         /// </returns>
         public static ComparisonResults CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
+            if (string.IsNullOrWhiteSpace(sourceFile))
+                return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: cannot be empty."));
+            if (string.IsNullOrWhiteSpace(targetFile))
+                return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: cannot be empty."));
+
             var sourceFileInfo = new FileLevel(sourceFile);
             var targetFileInfo = new FileLevel(targetFile);
 
