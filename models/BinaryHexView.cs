@@ -1,8 +1,8 @@
-﻿//*
+﻿// *
 namespace Chizl.FileCompare
 {
-    //public class Binary2HexView
-    //{
+    // public class Binary2HexView
+    // {
     //    private string _offset = "";
     //    internal void AddOffset(string str) => _offset = str;
 
@@ -12,13 +12,13 @@ namespace Chizl.FileCompare
     //    private string _printableChars = "";
     //    internal void AddPChar(string str) => _printableChars += str;
 
-    //    //prevent initialization
+    //    // prevent initialization
     //    internal Binary2HexView() {}
 
     //    public string Offset { get { return _offset.Trim(); } }
     //    public string HexValues { get { return _hexValues.Trim(); } }
     //    public string PrintableChars { get { return _printableChars.Trim(); } }
-    //}
+    // }
 }
 /**/
 
@@ -39,7 +39,7 @@ namespace Chizl.FileCompare
         private string _printableChars = "";
         internal void AddPChar(string str) => _printableChars += str;
 
-        //prevent initialization
+        // prevent initialization
         internal BinaryHexView() {}
 
         public DiffType DiffType { get { return _diffType; } }

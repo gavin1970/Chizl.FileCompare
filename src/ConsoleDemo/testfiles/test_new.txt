@@ -17,7 +17,7 @@ namespace IGNORE_ME
         private readonly STreeMap tMap = new STreeMap();
         private readonly LogMgr logger = new LogMgr();
         private readonly LoadDataInfo loadData = new LoadDataInfo();
-        //private Label HoverLable = new Label() { Name = "HoverLbl", BackColor = Color.FromArgb(255, 0, 0, 0), Visible = false };
+        // private Label HoverLable = new Label() { Name = "HoverLbl", BackColor = Color.FromArgb(255, 0, 0, 0), Visible = false };
         private string currentMouseOver = string.Empty;
         private Thread threadScan;
 
@@ -145,7 +145,7 @@ namespace IGNORE_ME
                 loadData.StopScan();
 
             while (loadData.IsScanning)
-                Thread.Sleep(0);    //cycle cpu
+                Thread.Sleep(0);    // cycle cpu
         }
         private void ButtonStatus()
         {

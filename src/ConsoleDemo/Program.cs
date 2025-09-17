@@ -5,7 +5,7 @@ namespace ConsoleDemo
 {
     internal class Program
     {
-        //clears screen and console buffer
+        // clears screen and console buffer
         static readonly string _clearBuffer = "\u001bc\x1b[3J";
         // - "\x1b[0m" - Resets all FG and BG colors from the point of entry
         // and there after until new color is set within the console screen.

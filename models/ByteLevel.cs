@@ -4,7 +4,7 @@ namespace Chizl.FileCompare
 {
     public class ByteLevel
     {
-        private readonly byte[] _makeReadable = new byte[] { 9, 10, 13 };  //special case
+        private readonly byte[] _makeReadable = new byte[] { 9, 10, 13 };  // special case
 
         internal ByteLevel(DiffType diff, char thisChar) : this(diff, (byte)thisChar) { }
         internal ByteLevel(DiffType diff, byte byteChar)

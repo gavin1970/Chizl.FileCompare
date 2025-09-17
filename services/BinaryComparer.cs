@@ -52,7 +52,7 @@ namespace Chizl.FileCompare
                         var matchedSpan = targetFile.Bytes.AsSpan(targetFile.Pointer, initModIndex - targetFile.Pointer);
                         arrDiffs.Add(new CompareDiff(DiffType.None, targetFile.Pointer, _encode, matchedSpan.ToArray()));
 
-                        //adding
+                        // adding
                         targetFile.Pointer = initModIndex;
                         sourceFile.Pointer = initOrgIndex;
                         continue;
@@ -140,7 +140,7 @@ namespace Chizl.FileCompare
                 var bytes = byteData.Skip(i).Take(length).ToArray();
                 retVal.TryAdd(Common.GetHashString(bytes), i);
 
-                //if (maxLoopCount <= 0 || retVal.Count == length)
+                // if (maxLoopCount <= 0 || retVal.Count == length)
                 if (maxLoopCount <= 0 || retVal.Count == (length * 2))
                     break;
             }
@@ -199,7 +199,7 @@ namespace Chizl.FileCompare
                     if (trgBytes.Length < ndx + byteMatch)
                         break;
 
-                    //searching 4 byte chunk matches
+                    // searching 4 byte chunk matches
                     var curBytes = trgBytes.AsSpan(ndx, byteMatch);
                     var isEqual = searchForBytes.SequenceEqual(curBytes);
 
@@ -216,7 +216,7 @@ namespace Chizl.FileCompare
                     return true;
                 else
                 {
-                    //reset with new byteMatch
+                    // reset with new byteMatch
                     initSrcIndex = orgInitSrcIndex;
                     initTrgIndex = orgInitTrgIndex;
 

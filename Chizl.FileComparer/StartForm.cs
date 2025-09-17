@@ -80,7 +80,7 @@ namespace Chizl.FileComparer
             if (File.Exists(_fileIconName))
                 this.Icon = Common.GetIcon(_fileIconName);
 
-            //LoadTestRtf();
+            // LoadTestRtf();
         }
         private void LoadTestRtf()
         {
@@ -105,12 +105,12 @@ namespace Chizl.FileComparer
                 if (i != 0)
                 {
                     if (i % 100 == 0)
-                        sb.Append("\\par ");    //carriage return
+                        sb.Append("\\par ");    // carriage return
 
                     if (i % 10 == 0)
                     {
-                        sb.Append("\\chcbpat0 ");   //turn BG color off
-                        sb.Append("\\cf0 ");        //turn FG color off
+                        sb.Append("\\chcbpat0 ");   // turn BG color off
+                        sb.Append("\\cf0 ");        // turn FG color off
                     }
                     else if (i % 5 == 0)
                     {
@@ -315,8 +315,8 @@ namespace Chizl.FileComparer
             }
             else if (!Disposing && !IsDisposed)
             {
-                //this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
-                //this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+                // this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+                // this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
 
                 SplitContainer1.Panel1Collapsed = false;
                 SplitContainer1.Panel2Collapsed = false;
@@ -331,15 +331,15 @@ namespace Chizl.FileComparer
                         score_threshold = .30;
                 }
 
-                //Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists, check existing
-                //value and if New File dropdown (2), make it 3, to represent both Old and New should have it.
-                //If existing value isn't 2, leave it as it, because 1 or 3 already exists.
+                // Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists, check existing
+                // value and if New File dropdown (2), make it 3, to represent both Old and New should have it.
+                // If existing value isn't 2, leave it as it, because 1 or 3 already exists.
                 _fileHistory.AddOrUpdate(this.OldAsciiFile.Text.Trim(), OLD_DROPDOWN,
                     (key, existingValue) => { return existingValue == NEW_DROPDOWN ? OLD_NEW_DROPDOWN : existingValue; });
 
-                //Add 2 as the value, to represent New File downdown component.  If Key already exists, check existing
-                //value and if Old File dropdown (1), make it 3, to represent both Old and New should have it.
-                //If existing value isn't 1, leave it as it, because 2 or 3 already exists.
+                // Add 2 as the value, to represent New File downdown component.  If Key already exists, check existing
+                // value and if Old File dropdown (1), make it 3, to represent both Old and New should have it.
+                // If existing value isn't 1, leave it as it, because 2 or 3 already exists.
                 _fileHistory.AddOrUpdate(this.NewAsciiFile.Text.Trim(), NEW_DROPDOWN,
                     (key, existingValue) => { return existingValue == OLD_DROPDOWN ? OLD_NEW_DROPDOWN : existingValue; });
 
@@ -406,7 +406,7 @@ namespace Chizl.FileComparer
                 SplitContainer1.Panel2Collapsed = false;
             }
 
-            //var arrayList = DiffTool.ShowInHex(filePath);
+            // var arrayList = DiffTool.ShowInHex(filePath);
             foreach (var line in DiffTool.ShowInHex(filePath))
             {
                 AddText(rtb, $"{line.Offset}  ", BACK_COLOR, OFFSET_COLOR);
@@ -444,9 +444,9 @@ namespace Chizl.FileComparer
             this.OldAsciiContent.Clear();
             this.NewAsciiContent.Clear();
 
-            //seem to be a odd bug where the scrollbars are not showing up, until the
-            //form is resized.  The RichTextBoxes are both using Dock = Fill, so setting
-            //Width=0 doesn't change the size, but it forces the scrollbars to show up.
+            // seem to be a odd bug where the scrollbars are not showing up, until the
+            // form is resized.  The RichTextBoxes are both using Dock = Fill, so setting
+            // Width=0 doesn't change the size, but it forces the scrollbars to show up.
             this.NewAsciiContent.Width = 0;
             this.OldAsciiContent.Width = 0;
         }
@@ -525,7 +525,7 @@ namespace Chizl.FileComparer
             else
             {
                 ViewAsBinaryButtonToollbar.Text = _binaryViewBtnTxt;
-                ShowComparison(false, true);    //Ascii is always Side By Side, 
+                ShowComparison(false, true);    // Ascii is always Side By Side, 
             }
         }
         private void Dropdown_SelectedIndexChanged(object sender, EventArgs e) => ViewAsBinaryButtonToollbar.Visible = false;
@@ -552,11 +552,14 @@ namespace Chizl.FileComparer
             {
                 StatusText.Text = $"Error:  {_lastFileComparison.Exception.Message}";
                 StatusText.BackColor = Color.FromArgb(255, 192, 192);
+                StatusText.Invalidate();
+                return;
             }
             else
             {
                 StatusText.Text = $"Line by Line Status:  Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change({_lastFileComparison.Diffs.Identical} )";
                 StatusText.BackColor = Color.Yellow;
+                StatusText.Invalidate();
             }
 
             ResetTimer.Enabled = true;
@@ -583,8 +586,8 @@ namespace Chizl.FileComparer
                     var lineNumber = $"{cmpr.LineNumber:0000}: ";
                     var lineString = $"{cmpr.LineDiffStr}";
 
-                    //removing any extra that might be residing..
-                    while (lineString.EndsWith("\n") || lineString.EndsWith("\r"))
+                    // removing any extra that might be residing..
+                    while (lineString.EndsWith("\n") || lineString.EndsWith("\r") || lineString.EndsWith("?"))
                         lineString = lineString.Substring(0, lineString.Length - 1);
 
                     if (string.IsNullOrWhiteSpace(lineString))
@@ -617,7 +620,14 @@ namespace Chizl.FileComparer
                             break;
                         case DiffType.Modified:
                             _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                            for (int i = 0; i < cmpr.ByteByByteDiff.Length; i++)
+                            // windows
+                            var ignoreLast2 = cmpr.ByteByByteDiff[cmpr.ByteByByteDiff.Length - 2].Byte == 13;
+                            // linux
+                            var ignoreLast1 = cmpr.ByteByByteDiff[cmpr.ByteByByteDiff.Length - 1].Byte == 10;
+                            // if /r or /n then we want to stop before it's displayed.
+                            var forLength = ignoreLast2 ? cmpr.ByteByByteDiff.Length - 2 : ignoreLast1 ? cmpr.ByteByByteDiff.Length - 1 : cmpr.ByteByByteDiff.Length;
+
+                            for (int i = 0; i < forLength; i++)
                             {
                                 var b = cmpr.ByteByByteDiff[i];
                                 var color = DELETE_COLOR;
@@ -636,8 +646,8 @@ namespace Chizl.FileComparer
                                         break;
                                 }
                             }
-                            oldRtfBuilder.AppendLine("");   //add carriage return
-                            newRtfBuilder.AppendLine("");   //add carriage return
+                            oldRtfBuilder.AppendLine("");   // add carriage return
+                            newRtfBuilder.AppendLine("");   // add carriage return
                             break;
                         default:
                             oldRtfBuilder.AppendLine($"{lineString}");
@@ -749,7 +759,7 @@ namespace Chizl.FileComparer
 
                         if (hexSize >= 16)
                         {
-                            //the ending of a color in RTF forces a space. We need to remove 1 space to counter it.
+                            // the ending of a color in RTF forces a space. We need to remove 1 space to counter it.
                             oldRtfBuilder.AppendLine($"  {oldPlainText}");
                             newRtfBuilder.AppendLine($"  {newPlainText}");
 

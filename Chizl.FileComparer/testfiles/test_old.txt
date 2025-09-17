@@ -144,7 +144,7 @@ namespace IGNORE_ME
                 loadData.StopScan();
 
             while (loadData.IsScanning)
-                Thread.Sleep(0);    //cycle cpu
+                Thread.Sleep(0);    // cycle cpu
         }
         private void ButtonStatus()
         {

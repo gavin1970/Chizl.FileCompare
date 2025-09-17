@@ -29,11 +29,11 @@ namespace Chizl.Rtf
         /**/
 
         // 1st Font Index, (17/2 = 8.5pt)
-        //const string FONT_FAMILY_SIZE = @"{\fonttbl{\f0\fnil\fcharset0 Courier New;}}\f0\fs17";
-        const string FONT_FAMILY_SIZE = @"{\rtf1\ansi\ansicpg1250\deff0\deflang1050{\fonttbl{\f0\fnil\fcharset238 Courier New;}}\fs17\r\n"; //\r\n
+        // const string FONT_FAMILY_SIZE = @"{\fonttbl{\f0\fnil\fcharset0 Courier New;}}\f0\fs17";
+        const string FONT_FAMILY_SIZE = @"{\rtf1\ansi\ansicpg1250\deff0\deflang1050{\fonttbl{\f0\fnil\fcharset238 Courier New;}}\fs17\r\n"; // \r\n
 
         const string START_COLORS = @"{\colortbl;";
-        const string EMPTY_FGCOLOR = @"\cf0";       //\~
+        const string EMPTY_FGCOLOR = @"\cf0";       // \~
         const string EMPTY_BGCOLOR = @"\chcbpat0 ";
         const string FGCOLOR = @"\cf";
         const string BGCOLOR = @"\chcbpat";
@@ -82,25 +82,25 @@ namespace Chizl.Rtf
             var rtfSpace = " ";
             if (!string.IsNullOrEmpty(text))
             {
-                //if previous background color wasn't empty and now it is, we want to reset color to default.
+                // if previous background color wasn't empty and now it is, we want to reset color to default.
                 if (!_bgPrevColor.IsEmpty && bg.IsEmpty)
                 {
                     _contentTextRtf.Append(EMPTY_BGCOLOR);
                     _bgPrevColor = bg;
                 }
-                //if previous foreground color wasn't empty and now it is, we want to reset color to default.
+                // if previous foreground color wasn't empty and now it is, we want to reset color to default.
                 if (!_fgPrevColor.IsEmpty && fg.IsEmpty)
                 {
                     _contentTextRtf.Append(EMPTY_FGCOLOR);
                     _fgPrevColor = fg;
                 }
-                //if background color isn't empty and previous background is different than new color, lets set color.
+                // if background color isn't empty and previous background is different than new color, lets set color.
                 if (!bg.IsEmpty && !_bgPrevColor.Equals(bg))
                 {
                     _contentTextRtf.Append($"{BGCOLOR}{_colorTableManager.GetIndex(bg)}{rtfSpace}");
                     _bgPrevColor = bg;
                 }
-                //if foregroundcolor isn't empty and previous foregroundis different than new color, lets set color.
+                // if foregroundcolor isn't empty and previous foregroundis different than new color, lets set color.
                 if (!fg.IsEmpty && !_fgPrevColor.Equals(fg))
                 {
                     _contentTextRtf.Append($"{FGCOLOR}{_colorTableManager.GetIndex(fg)}{rtfSpace}");

@@ -29,8 +29,8 @@ namespace Chizl.Components
                 CreateParams cp = base.CreateParams;
                 // Set a style flag to hide the vertical scrollbar.
                 
-                //cp.Style &= ~WS_VSCROLL; // Remove
-                //cp.Style &= ~WS_HSCROLL; // Remove
+                // cp.Style &= ~WS_VSCROLL; // Remove
+                // cp.Style &= ~WS_HSCROLL; // Remove
 
                 cp.Style |= WS_VSCROLL;  // Add
                 cp.Style |= WS_HSCROLL;  // Add

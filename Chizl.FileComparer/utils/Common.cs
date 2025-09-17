@@ -33,11 +33,11 @@ namespace Chizl.FileComparer
         public static Icon GetIcon(string path)
         {
             Bitmap bmp = (Bitmap)Image.FromFile(path);
-            if (bmp.Width > 128 || bmp.Height > 128)    //max the icon size to: 128x128
+            if (bmp.Width > 128 || bmp.Height > 128)    // max the icon size to: 128x128
                 bmp = ResizeBitmap(bmp, new Size(128, 128));
             IntPtr Hicon = bmp.GetHicon();
             var ico = (Icon)Icon.FromHandle(Hicon).Clone();
-            //Required cleanup or creates memory leak.
+            // Required cleanup or creates memory leak.
             DestroyIcon(Hicon);
 
             return ico;

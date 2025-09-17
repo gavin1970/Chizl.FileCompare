@@ -256,17 +256,17 @@ namespace Chizl.FileCompare
                 if (e.op == ' ')
                 {
                     for (int i = e.i1; i < e.i2; i++)
-                        result.Add((" ", a[i]));
+                        result.Add((" ", $"{a[i]}{Environment.NewLine}"));
                 }
                 else if (e.op == '-')
                 {
                     for (int i = e.i1; i < e.i2; i++)
-                        result.Add(("-", a[i]));
+                        result.Add(("-", $"{a[i]}{Environment.NewLine}"));
                 }
                 else if (e.op == '+')
                 {
                     for (int j = e.j1; j < e.j2; j++)
-                        result.Add(("+", b[j]));
+                        result.Add(("+", $"{b[j]}{Environment.NewLine}"));
                 }
             }
             return result;

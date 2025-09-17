@@ -25,4 +25,4 @@ if $(ConfigurationName) == Release (
 
 ## Reporting a Vulnerability or an Issue
 
-Go to <a href="https://github.com/gavin1970/Chizl.FileCompare/issues">Issues</a> in the top menu and post the issue and be as detailed as you can to reproduce it.
+Go to <a href="https:// github.com/gavin1970/Chizl.FileCompare/issues">Issues</a> in the top menu and post the issue and be as detailed as you can to reproduce it.

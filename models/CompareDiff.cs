@@ -31,7 +31,7 @@ namespace Chizl.FileCompare
                 throw new ArgumentException("Byte level data is required.");
 
             _lineDiffBytes = byteLevelDiff.ToArray();
-            _lineDiffStr = enc.GetString(_lineDiffBytes.Select(s=>s.Byte).ToArray()).ReplaceCrLf('?'); 
+            _lineDiffStr = enc.GetString(_lineDiffBytes.Select(s=>s.Byte).ToArray()); 
         }
         internal CompareDiff(DiffType diff, int line, ReadOnlySpan<byte> diffSpan) : this(diff, line, _defaultEncoding, diffSpan.ToArray()) { }
         internal CompareDiff(DiffType diff, int line, Encoding enc, byte[] diffArray) : this(diff, line, enc)
@@ -40,14 +40,14 @@ namespace Chizl.FileCompare
                 throw new ArgumentException("Byte data is required.");
 
             _lineDiffBytes = diffArray.Select(s => new ByteLevel(diff, s)).ToArray();
-            _lineDiffStr = enc.GetString(diffArray).ReplaceCrLf('?');
+            _lineDiffStr = enc.GetString(diffArray);
         }
         internal CompareDiff(DiffType diff, int line, string diffStr) : this(diff, line, _defaultEncoding, diffStr) { }
         internal CompareDiff(DiffType diff, int line, Encoding enc, string diffStr) : this(diff, line, enc)
         {
-            _lineDiffStr = diffStr.ReplaceCrLf('?');
             if (diffStr != null && diffStr.Length > 0)
                 _lineDiffBytes = enc.GetBytes(diffStr).Select(s => new ByteLevel(diff, s)).ToArray();
+            _lineDiffStr = diffStr;
         }
 
         /// <summary>
@@ -105,13 +105,13 @@ namespace Chizl.FileCompare
                 {
                     i += 2;
                     charList.Add(new ByteLevel(DiffType.Added, charArray[i]));
-                    i++;    //skip end Mod
+                    i++;    // skip end Mod
                 }
                 else if (thisChar == '[' && nextChar == '-' && endMod == ']')
                 {
                     i += 2;
                     charList.Add(new ByteLevel(DiffType.Deleted, charArray[i]));
-                    i++;    //skip end Mod
+                    i++;    // skip end Mod
                 }
                 else
                     charList.Add(new ByteLevel(DiffType.Modified, thisChar));
@@ -120,6 +120,7 @@ namespace Chizl.FileCompare
             _textBreakDown = charList.ToArray();
             return _textBreakDown;
         }
+
         /// <summary>
         /// Hex string from byte array.
         /// </summary>
