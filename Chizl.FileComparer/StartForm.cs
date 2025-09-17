@@ -12,6 +12,7 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace Chizl.FileComparer
 {
@@ -318,8 +319,8 @@ namespace Chizl.FileComparer
                 // this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
                 // this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
 
-                SplitContainer1.Panel1Collapsed = false;
-                SplitContainer1.Panel2Collapsed = false;
+                this.SplitContainer1.Panel1Collapsed = false;
+                this.SplitContainer1.Panel2Collapsed = false;
 
                 ClearRichText();
 
@@ -331,19 +332,24 @@ namespace Chizl.FileComparer
                         score_threshold = .30;
                 }
 
-                // Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists, check existing
-                // value and if New File dropdown (2), make it 3, to represent both Old and New should have it.
-                // If existing value isn't 2, leave it as it, because 1 or 3 already exists.
-                _fileHistory.AddOrUpdate(this.OldAsciiFile.Text.Trim(), OLD_DROPDOWN,
+                // remove any quotes 
+                var oldFile = this.OldAsciiFile.Text.Replace("\"", "").Replace("'", "");
+                var newFile = this.NewAsciiFile.Text.Replace("\"", "").Replace("'", "");
+
+                Task.Run(() => { _lastFileComparison = DiffTool.CompareFiles(oldFile, newFile, score_threshold, 3); }).Wait();
+
+                // Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists,
+                // check existingvalue and if New File dropdown (2), make it 3, to represent both Old and New
+                // should have it.  If existing value isn't 2, leave it as it, because 1 or 3 already exists.
+                _fileHistory.AddOrUpdate(oldFile.Trim(), OLD_DROPDOWN,
                     (key, existingValue) => { return existingValue == NEW_DROPDOWN ? OLD_NEW_DROPDOWN : existingValue; });
 
                 // Add 2 as the value, to represent New File downdown component.  If Key already exists, check existing
                 // value and if Old File dropdown (1), make it 3, to represent both Old and New should have it.
                 // If existing value isn't 1, leave it as it, because 2 or 3 already exists.
-                _fileHistory.AddOrUpdate(this.NewAsciiFile.Text.Trim(), NEW_DROPDOWN,
+                _fileHistory.AddOrUpdate(newFile.Trim(), NEW_DROPDOWN,
                     (key, existingValue) => { return existingValue == OLD_DROPDOWN ? OLD_NEW_DROPDOWN : existingValue; });
 
-                _lastFileComparison = DiffTool.CompareFiles(this.OldAsciiFile.Text, this.NewAsciiFile.Text, score_threshold, 3);
                 this.ViewAsBinaryButtonToollbar.Visible = !_lastFileComparison.IsBinary;
 
                 if (_lastFileComparison.HasException)
