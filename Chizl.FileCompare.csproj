@@ -20,10 +20,13 @@
 		</PropertyGroup>
 
 		<ItemGroup>
+				<Compile Remove="Chizl.FileCompare.Tests\**" />
 				<Compile Remove="Chizl.FileComparer\**" />
 				<Compile Remove="src\**" />
+				<EmbeddedResource Remove="Chizl.FileCompare.Tests\**" />
 				<EmbeddedResource Remove="Chizl.FileComparer\**" />
 				<EmbeddedResource Remove="src\**" />
+				<None Remove="Chizl.FileCompare.Tests\**" />
 				<None Remove="Chizl.FileComparer\**" />
 				<None Remove="src\**" />
 		</ItemGroup>

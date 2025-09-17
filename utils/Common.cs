@@ -9,36 +9,35 @@ namespace Chizl.FileCompare
 
         /// <summary>
         /// Used LINQ.Where().Count()>1 originally, but it's scans the 
-        /// whole buffer while looping is a few milliseconds faster.
+        /// whole buffer, while looping is a few milliseconds faster.
         /// </summary>
         public static bool IsBinary(byte[] bytes, int bytesRead, out string errorMsg)
         {
-            int nullCount = 0;
             errorMsg = string.Empty;
-
             try
             {
+                int controlChars = 0;
+
                 for (int i = 0; i < bytesRead; i++)
                 {
-                    if (bytes[i] == '\0')
-                    {
-                        nullCount++;
+                    byte b = bytes[i];
 
-                        // There are some malformed ascii text files with 1
-                        // string terminator.  So we look for more than 1.
-                        // Its been found, most of the time at the end of the file.
-                        if (nullCount > 1)
-                            // Found more than one string terminator, most definitely binary
-                            return true;
-                    }
+                    if (b == 0) // null byte
+                        return true;
+
+                    // Count ASCII control characters except newline, carriage return, tab
+                    if (b < 32 && b != 9 && b != 10 && b != 13)
+                        controlChars++;
                 }
+
+                // If more than 5% of bytes are control characters, likely binary
+                return ((double)controlChars / bytesRead) > 0.05;
             }
             catch (Exception ex)
             {
                 errorMsg = $"IsBinary(byte[]) Exception:\n{ex.Message}";
+                return false;
             }
-
-            return false; // Found one or less null, likely text
         }
         /// <summary>
         /// Used LINQ.Where().Count()>1 originally, but it's scans the 
