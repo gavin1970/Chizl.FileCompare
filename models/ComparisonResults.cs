@@ -4,64 +4,87 @@ using System.Linq;
 
 namespace Chizl.FileCompare
 {
+    /// <summary>
+    /// Represents the results of comparing two files (ASCII or binary).
+    /// Provides detailed line-by-line differences, counts of change types,
+    /// and status information such as exceptions or binary detection.
+    /// </summary>
     public class ComparisonResults
     {
         /// <summary>
-        /// Only used by static property "ComparisonResults.Empty"
+        /// Private constructor for creating an empty ComparisonResults instance.
+        /// Used by the static <see cref="Empty"/> property.
         /// </summary>
-        private ComparisonResults() { IsEmpty = true; }
-        internal ComparisonResults(Exception ex) 
-        { 
-            IsEmpty = true; 
+        private ComparisonResults()
+        {
+            IsEmpty = true;
+        }
+
+        /// <summary>
+        /// Internal constructor used when an exception occurs while loading files.
+        /// </summary>
+        /// <param name="ex">The exception that occurred during comparison.</param>
+        internal ComparisonResults(Exception ex)
+        {
+            IsEmpty = true;
             Exception = ex;
             IsBinary = false;
         }
+
+        /// <summary>
+        /// Internal constructor used when comparison completes successfully.
+        /// </summary>
+        /// <param name="compareDiffs">List of per-line comparison results.</param>
+        /// <param name="isBinary">True if the files compared were binary; otherwise false.</param>
         internal ComparisonResults(List<CompareDiff> compareDiffs, bool isBinary = false)
         {
             this.IsBinary = isBinary;
             this.LineComparison = compareDiffs.ToArray();
             this.Diffs = new DiffCounts(
-                compareDiffs.Where(w => w.DiffType == DiffType.Added).Count(),
-                compareDiffs.Where(w => w.DiffType == DiffType.Deleted).Count(),
-                compareDiffs.Where(w => w.DiffType == DiffType.Modified).Count(),
-                compareDiffs.Where(w => w.DiffType == DiffType.None).Count()
+                compareDiffs.Count(w => w.DiffType == DiffType.Added),
+                compareDiffs.Count(w => w.DiffType == DiffType.Deleted),
+                compareDiffs.Count(w => w.DiffType == DiffType.Modified),
+                compareDiffs.Count(w => w.DiffType == DiffType.None)
             );
         }
 
         /// <summary>
-        /// Create an empty Model.  IsEmpty will be set to True.
+        /// Returns an empty <see cref="ComparisonResults"/> instance.
+        /// The <see cref="IsEmpty"/> property will be set to true.
         /// </summary>
         public static ComparisonResults Empty { get; } = new ComparisonResults();
+
         /// <summary>
-        /// If ComparisonResults wasn't intialized, True will be returned.
+        /// Indicates whether this instance contains meaningful comparison data.
+        /// True if the instance is empty or created due to an exception.
         /// </summary>
         public bool IsEmpty { get; } = false;
+
         /// <summary>
-        /// If files compared were binary or not.
+        /// Indicates whether the files compared were binary.
         /// </summary>
         public bool IsBinary { get; } = false;
+
         /// <summary>
-        /// If an Exception occurs when files are to be loaded, this will be set to true.<br/>
-        /// "Exception" property for this class will be set to exception reason.
+        /// Returns true if an exception occurred during file comparison.
         /// </summary>
-        public bool HasException { get { return this.Exception != null; } }
+        public bool HasException => this.Exception != null;
+
         /// <summary>
-        /// Only used when one of the files is missing when CompareFiles() is called.<br/>
-        /// <code>
-        /// if (!sourceFileInfo.Exists)
-        ///     return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)}: '{sourceFile}' is not found and/or accessible."));
-        /// if (!targetFileInfo.Exists)
-        ///     return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found and/or accessible."));
-        /// </code>
+        /// Provides the exception that occurred when comparing files, if any.
+        /// This is typically set when a file is missing or cannot be read.
         /// </summary>
         public Exception Exception { get; } = null;
+
         /// <summary>
-        /// Holds each line with each byte showing any differences that may exist.
+        /// Array of per-line comparison results.
+        /// Each <see cref="CompareDiff"/> indicates the line content and type of change.
         /// </summary>
         public CompareDiff[] LineComparison { get; } = new CompareDiff[0];
+
         /// <summary>
-        /// Shows how many of each different change types were found.<br/>
-        /// Add, Modified, Delete, or No Change
+        /// Aggregated counts of differences found in the comparison.
+        /// Tracks number of Added, Deleted, Modified, and Unchanged lines.
         /// </summary>
         public DiffCounts Diffs { get; } = new DiffCounts(0, 0, 0, 0);
     }

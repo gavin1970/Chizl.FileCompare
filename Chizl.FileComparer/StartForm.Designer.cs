@@ -119,7 +119,6 @@
             this.OldAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
             this.OldAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
             this.OldAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
-
             // 
             // panel5
             // 

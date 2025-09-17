@@ -2,24 +2,83 @@
 using System.IO;
 using System.Linq;
 using System.Collections.Generic;
-using System.Diagnostics;
 
 namespace Chizl.FileCompare
 {
+    /// <summary>
+    /// <code>
+    /// Diff engine based on the Myers algorithm (O(ND) shortest edit script).
+    /// 
+    /// - Core algorithm: Myers diff (produces insert/delete operations).
+    /// - Extension: A similarity check is applied post-process to collapse
+    ///              adjacent delete+insert pairs into "modify" operations
+    ///              when line similarity exceeds a threshold.
+    /// 
+    /// Input handling:
+    /// - Files are read fully into arrays of lines (string[]).
+    ///   This keeps the algorithm correct and efficient, since Myers requires
+    ///   random access to both sequences.
+    /// - Memory usage is linear in the number of lines, not quadratic as in
+    ///   the LCS matrix approach. Large multi-MB files are now practical.
+    /// 
+    /// Notes:
+    /// - This implementation is still "Myers" at its core, with an additional
+    ///   similarity-based refinement layer.
+    /// - A true streaming version (line-by-line without ToArray) is not feasible
+    ///   for exact Myers, since the algorithm requires arbitrary lookahead.
+    ///   Chunked/streamed approaches would be "Myers-inspired" rather than pure.
+    /// </code>
+    /// </summary>
     public sealed class DiffTool
     {
         /// <summary>
-        /// Compare two ascii files and return line for line what was added, removed, and modified.<br/>
-        /// Each modifiied will have single char brackets around each add or removed.<br/>
-        /// By modifying the score threshold will provide the level of detail you are loooking for.<br/>
+        /// 
         /// </summary>
-        /// <param name="sourceFile">Older file to compare</param>
-        /// <param name="targetFile">Newier file to compare</param>
-        /// <param name="scoreThreshold">Default 30%.  Highter percentages will give less modified and show added/deleted lines instead.</param>
-        /// <param name="lineLookAhead">For multi line ascii files, how far ahead to look for possible matches?</param>
+        /// <param name="fullPath">Path to file to view as Hex</param>
+        /// <returns>ByteLineLevel array.  Each ByteLineLevel holds offset, hex values, and printable characters.</returns>
+        /// <exception cref="Exception">Any exception during access, open, or read</exception>
+        public static IEnumerable<ByteLineLevel> ShowInHex(string fullPath)
+        {
+            using (FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read))
+            {
+                int bytesRead;
+                byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
+                int offset = 0;
+                int lineNo = 1;
+
+                while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+                {
+                    var bhView = new ByteLineLevel(FileFormat.Binary, lineNo++);
+                    // Display offset
+                    bhView.AddOffset($"{offset:X8}:");
+
+                    // Display hex values
+                    for (int i = 0; i < bytesRead; i++)
+                        bhView.AddToHexStr((char)buffer[i]);
+
+                    yield return bhView;
+                    offset += bytesRead;
+                }
+            }
+        }
+        /// <summary>
+        /// Compares two files, either ASCII/text or binary.
+        /// - For binary files, the result indicates IsBinary and can be displayed appropriately.
+        /// - For ASCII files, differences are computed using Myers diff with optional modify detection.
+        /// </summary>
+        /// <param name="sourceFile">The source file (considered the older file).</param>
+        /// <param name="targetFile">The target file (considered the newer file).</param>
+        /// <param name="scoreThreshold">
+        /// ASCII COMPARE ONLY: The similarity threshold (0–1) for a line to be considered a modification (~)
+        /// instead of a separate Add (+) or Delete (-).
+        /// </param>
+        /// <param name="lineLookAhead">
+        /// ASCII COMPARE ONLY: The number of subsequent lines to inspect when merging adjacent
+        /// delete+insert pairs into modifications.
+        /// </param>
         /// <returns>
-        /// File details and line by line comparison<br/>
-        /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
+        /// A <see cref="ComparisonResults"/> object with details for each line, 
+        /// and inline character-level highlights for modified lines.
         /// </returns>
         public static ComparisonResults CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
@@ -31,87 +90,20 @@ namespace Chizl.FileCompare
             if (!targetFileInfo.Exists)
                 return new ComparisonResults(new ArgumentException($"{nameof(targetFile)}: '{targetFile}' is not found and/or accessible."));
 
-            var isSrcBinary = sourceFileInfo.IsBinary;
-            var isTrgBinary = targetFileInfo.IsBinary;
-
-            //if one of them is binary, view them both as binary else both as ascii.
-            if (isSrcBinary || isTrgBinary)
+            // Binary path unchanged
+            if (sourceFileInfo.IsBinary || targetFileInfo.IsBinary)
                 return BinaryComparer.CompareFiles(sourceFileInfo, targetFileInfo);
-            else
-                return CompareStringArr(sourceFileInfo.Content, targetFileInfo.Content, scoreThreshold, lineLookAhead);
-        }
-        /// <summary>
-        /// Compare two ascii strings and return line for line what was added, removed, and modified.<br/>
-        /// Each modifiied will have single char brackets around each add, modified, or removed.<br/>
-        /// Because this is for small one or two line strings, this defaults the threashold to 10%.<br/>
-        /// <code>
-        /// Example: 
-        ///     var fileComparison = DiffTool.CompareString("abcdefjhijklmnopqrstuvwxyz", "abcdfjhijklemnopqrsuvwxtyz");
-        ///     foreach (var cmpr in fileComparison.LineComparison)
-        ///         Console.WriteLine(cmpr.LineDiffStr);
-        /// Results:
-        ///     abcd[-e]fjhijkl[+e]mnopqrs[-t]uvwx[+t]yz
-        ///     
-        /// Binary View:
-        ///     foreach (var cmpr in fileComparison.LineComparison)
-        ///     {
-        ///         var printableText = "";
-        ///         foreach(var byteLevel int cmpr.ByteByByteDiff)
-        ///         {
-        ///             Console.BackgroundColor = ConsoleColor.Green;
-        ///             switch (byteLevel.DiffType)
-        ///             {
-        ///                 case DiffType.Added:
-        ///                     Console.BackgroundColor = ConsoleColor.Green;
-        ///                     Console.ForegroundColor = ConsoleColor.White;
-        ///                     break;
-        ///                 case DiffType.Deleted:
-        ///                     Console.BackgroundColor = ConsoleColor.Red;
-        ///                     Console.ForegroundColor = ConsoleColor.White;
-        ///                     break;
-        ///                 case DiffType.Modified:
-        ///                     Console.BackgroundColor = ConsoleColor.Yellow;
-        ///                     Console.ForegroundColor = ConsoleColor.Black;
-        ///                     break;
-        ///                 default:
-        ///                     break;
-        ///             }
-        ///             
-        ///             // - "\x1b[0m" - Resets all FG and BG colors from the point of entry and there after until new color is set within the console screen.
-        ///             Console.Write($"{byteLevel.Hex}\x1b[0m ");
-        ///             printableText += byteLevel.Str;
-        ///         }
-        ///         Console.WriteLine($" {printableText}");
-        ///     }
-        /// </code>
-        /// </summary>
-        /// <param name="srcText">Older string to compare</param>
-        /// <param name="trgText">Newier string to compare</param>
-        /// <returns>
-        /// File details and byte by comparison<br/>
-        /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
-        /// </returns>
-        public static ComparisonResults CompareString(string srcText, string trgText)
-        {
-            var srcLine = srcText.Replace("\r", "").Split('\n');
-            var trgLine = trgText.Replace("\r", "").Split('\n');
 
-            return CompareStringArr(srcLine, trgLine, .10);
+            // Read text lines (Myers is O(N+M) memory). If you already have arrays, call CompareStringArr directly.
+            var a = File.ReadLines(sourceFile).ToArray();
+            var b = File.ReadLines(targetFile).ToArray();
+
+            return CompareStringArr(a, b, scoreThreshold, lineLookAhead);
         }
         /// <summary>
-        /// Compare two ascii string arrays and return line for line what was added, removed, and modified.<br/>
-        /// Each modifiied will have single char brackets around each add or removed.<br/>
-        /// By modifying the score threshold will provide the level of detail you are loooking for.<br/>
+        /// Builds results off of scripts from Myers, then merges with an LCS to seperate Added, Deleted, and Modified lines.
         /// </summary>
-        /// <param name="linesOld">Older string array to compare</param>
-        /// <param name="linesNew">Newier string array to compare</param>
-        /// <param name="scoreThreshold">Default 30%.  Highter percentages will give less modified and show added/deleted lines instead.</param>
-        /// <param name="lineLookAhead">For the array list, how far ahead to look for possible matches?</param>
-        /// <returns>
-        /// File details and line by line comparison<br/>
-        /// Also can return ComparisonResults.HasException bool property where the ComparisonResults.Exception is the object in question.
-        /// </returns>
-        public static ComparisonResults CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3)
+        private static ComparisonResults CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
             var retVal = new List<CompareDiff>();
             var lineNo = 0;
@@ -119,128 +111,175 @@ namespace Chizl.FileCompare
             while (scoreThreshold > 1.00) scoreThreshold /= 100.00;
             scoreThreshold = scoreThreshold.ClampTo(0.15, 0.85);
 
-            var lcs = BuildLcsTable(linesOld, linesNew);
+            // Get raw edit script from Myers
+            var rawDiff = MyersDiff(linesOld, linesNew);
 
-            var rawDiff = new List<(string Tag, string Text)>();
-            BuildRawDiff(lcs, linesOld, linesNew, linesOld.Length, linesNew.Length, rawDiff);
+            // Merge nearby -/+ into ~ when similar (your previous logic)
+            var finalDiff = MergeSimilarChanges(rawDiff, lineLookAhead, scoreThreshold);
 
-            var finalDiff = MergeSimilarChanges(rawDiff, lineLookAhead, scoreThreshold); // 3-line lookahead window
             DiffType diffType = DiffType.None;
             var prevSize = 0;
             foreach (var entry in finalDiff)
             {
                 switch (entry.Tag)
                 {
-                    case "+":
-                        diffType = DiffType.Added;
-                        break;
-                    case "-":
-                        diffType = DiffType.Deleted;
-                        break;
-                    case "~":
-                        diffType = DiffType.Modified;
-                        break;
-                    default:
-                        diffType = DiffType.None;
-                        break;
+                    case "+": diffType = DiffType.Added; break;
+                    case "-": diffType = DiffType.Deleted; break;
+                    case "~": diffType = DiffType.Modified; break;
+                    default: diffType = DiffType.None; break;
                 }
 
-               
-                //get line
                 var textLine = entry.Text;
+                if (prevSize == 0) prevSize = 30;
+                if (textLine.Length == 0) textLine = new string(' ', prevSize);
 
-                //if line is zero in size and previous was zero in size, force 30 as a length
-                if (prevSize == 0)
-                    prevSize = 30;                  //random
-
-
-                if (textLine.Length == 0)
-                    textLine = new string(' ', prevSize);
-                
                 retVal.Add(new CompareDiff(diffType, ++lineNo, textLine));
                 prevSize = textLine.Length;
             }
 
             return new ComparisonResults(retVal, false);
-
         }
         /// <summary>
-        /// Load files as binary, then convert to string hex format for side by side view of next binary load file.
+        /// Robust Myers implementation (array V, trace)
         /// </summary>
-        /// <param name="fullPath"></param>
-        /// <param name="returnArr"></param>
-        /// <param name="errorMsg"></param>
-        /// <returns></returns>
-        public static ByteLineLevel[] ShowInHex(string fullPath)
+        private static List<(string Tag, string Text)> MyersDiff(IList<string> a, IList<string> b)
         {
-            var binHexViewList = new List<ByteLineLevel>();
+            int N = a.Count;
+            int M = b.Count;
+            int max = N + M;
+            int offset = max;
+            int size = 2 * max + 1;
+            var V = new int[size];
+            // V[offset + 1] = 0;  // default 0
 
-            try
+            var trace = new List<int[]>();
+
+            for (int d = 0; d <= max; d++)
             {
-                using (FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read))
+                var Vd = new int[size];
+                Array.Copy(V, Vd, size);
+
+                for (int k = -d; k <= d; k += 2)
                 {
-                    int bytesRead;
-                    byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
-                    int offset = 0;
-                    int lineNo = 1;
-                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+                    int idx = k + offset;
+                    int x;
+                    // choose down or right
+                    if (k == -d || (k != d && V[idx - 1] < V[idx + 1]))
+                        x = V[idx + 1];       // down (insertion)
+                    else
+                        x = V[idx - 1] + 1;   // right (deletion)
+
+                    int y = x - k;
+
+                    // snake: follow equal elements
+                    while (x < N && y < M && string.Equals(a[x], b[y], StringComparison.Ordinal))
                     {
-                        var bhView = new ByteLineLevel(FileFormat.Binary, lineNo++);
-                        // Display offset
-                        bhView.AddOffset($"{offset:X8}:");
+                        x++; y++;
+                    }
 
-                        // Display hex values
-                        for (int i = 0; i < bytesRead; i++)
-                            bhView.AddToHexStr((char)buffer[i]);
+                    Vd[idx] = x;
 
-                        binHexViewList.Add(bhView);
-                        offset += bytesRead;
+                    if (x >= N && y >= M)
+                    {
+                        trace.Add(Vd);
+                        goto BACKTRACK;
                     }
                 }
+
+                V = Vd;
+                trace.Add(Vd);
             }
-            catch (Exception ex)
+
+        BACKTRACK:
+            int rx = N, ry = M;
+            var edits = new List<(char op, int i1, int i2, int j1, int j2)>();
+
+            for (int d = trace.Count - 1; d >= 0; d--)
             {
-                throw new Exception($"Exception in ShowInHex(\"{fullPath}\"):\n{ex.Message}");
-            }
+                var Vd = trace[d];
+                int k = rx - ry;
+                int idx = k + offset;
 
-            return binHexViewList.ToArray();
-        }
+                int prevK;
+                if (k == -d || (k != d && Vd[idx - 1] < Vd[idx + 1]))
+                    prevK = k + 1;
+                else
+                    prevK = k - 1;
 
-        private static int[,] BuildLcsTable(string[] a, string[] b)
-        {
-            int m = a.Length, n = b.Length;
-            var table = new int[m + 1, n + 1];
+                int prevIdx = prevK + offset;
+                int prevX = Vd[prevIdx];
+                int prevY = prevX - prevK;
 
-            for (int i = 1; i <= m; i++)
-            {
-                for (int j = 1; j <= n; j++)
+                // snake (matches)
+                while (rx > prevX && ry > prevY)
                 {
-                    if (a[i - 1] == b[j - 1])
-                        table[i, j] = table[i - 1, j - 1] + 1;
+                    edits.Add((' ', rx - 1, rx, ry - 1, ry));
+                    rx--; ry--;
+                }
+
+                if (d > 0)
+                {
+                    if (rx == prevX)
+                    {
+                        // insertion(s) in b
+                        edits.Add(('+', rx, rx, prevY, ry));
+                    }
                     else
-                        table[i, j] = Math.Max(table[i - 1, j], table[i, j - 1]);
+                    {
+                        // deletion(s) from a
+                        edits.Add(('-', prevX, rx, ry, ry));
+                    }
+                }
+
+                rx = prevX;
+                ry = prevY;
+            }
+
+            edits.Reverse();
+
+            // Flatten segments to tag/text entries
+            var result = new List<(string, string)>();
+            foreach (var e in edits)
+            {
+                if (e.op == ' ')
+                {
+                    for (int i = e.i1; i < e.i2; i++)
+                        result.Add((" ", a[i]));
+                }
+                else if (e.op == '-')
+                {
+                    for (int i = e.i1; i < e.i2; i++)
+                        result.Add(("-", a[i]));
+                }
+                else if (e.op == '+')
+                {
+                    for (int j = e.j1; j < e.j2; j++)
+                        result.Add(("+", b[j]));
                 }
             }
-            return table;
+            return result;
         }
-        private static void BuildRawDiff(int[,] lcs, string[] a, string[] b, int i, int j, List<(string, string)> output)
+        /// <summary>
+        /// Highlight character-level changes for modified lines.
+        /// Uses a small dynamic-programming LCS table (safe since lines are short).
+        /// This is separate from the main file-level Myers diff.
+        /// </summary>        
+        private static string HighlightCharChanges(string oldLine, string newLine)
         {
-            if (i > 0 && j > 0 && a[i - 1] == b[j - 1])
-            {
-                BuildRawDiff(lcs, a, b, i - 1, j - 1, output);
-                output.Add((" ", a[i - 1]));
-            }
-            else if (j > 0 && (i == 0 || lcs[i, j - 1] >= lcs[i - 1, j]))
-            {
-                BuildRawDiff(lcs, a, b, i, j - 1, output);
-                output.Add(("+", b[j - 1]));
-            }
-            else if (i > 0 && (j == 0 || lcs[i, j - 1] < lcs[i - 1, j]))
-            {
-                BuildRawDiff(lcs, a, b, i - 1, j, output);
-                output.Add(("-", a[i - 1]));
-            }
+            var oldChars = oldLine.Select(c => c.ToString()).ToArray();
+            var newChars = newLine.Select(c => c.ToString()).ToArray();
+
+            var lcs = BuildLcsTable(oldChars, newChars);
+            return BuildHighlightedDiff(lcs, oldChars, newChars, oldChars.Length, newChars.Length);
         }
+        /// <summary>
+        /// Post-processing step for Myers diff results.
+        /// - Scans for delete+insert pairs within a lookahead window.
+        /// - If similarity exceeds a threshold, merges them into a "~" (modified).
+        /// - Calls HighlightCharChanges to compute fine-grained edits.
+        /// 
+        /// This is not part of Myers; it is a refinement layer.
+        /// </summary>
         private static List<(string Tag, string Text)> MergeSimilarChanges(List<(string Tag, string Text)> diff, int windowSize, double scoreThreshold)
         {
             var merged = new List<(string, string)>();
@@ -282,19 +321,42 @@ namespace Chizl.FileCompare
             }
             return merged;
         }
+        /// <summary>
+        /// Simple similarity heuristic for line-level comparison.
+        /// Counts matching characters in the same position.
+        /// </summary>
         private static double Similarity(string a, string b)
         {
+            if (string.IsNullOrEmpty(a) && string.IsNullOrEmpty(b)) return 1.0;
+            if (string.IsNullOrEmpty(a) || string.IsNullOrEmpty(b)) return 0.0;
+
             int same = a.Zip(b, (ca, cb) => ca == cb ? 1 : 0).Sum();
             return (double)same / Math.Max(a.Length, b.Length);
         }
-        private static string HighlightCharChanges(string oldLine, string newLine)
+        /// <summary>
+        /// Build a small LCS table for character-level diff inside a single line.
+        /// Complexity is trivial because lines are short.
+        /// </summary>
+        private static int[,] BuildLcsTable(string[] a, string[] b)
         {
-            var oldChars = oldLine.Select(c => c.ToString()).ToArray();
-            var newChars = newLine.Select(c => c.ToString()).ToArray();
-
-            var lcs = BuildLcsTable(oldChars, newChars);
-            return BuildHighlightedDiff(lcs, oldChars, newChars, oldChars.Length, newChars.Length);
+            int m = a.Length, n = b.Length;
+            var table = new int[m + 1, n + 1];
+            for (int i = 1; i <= m; i++)
+            {
+                for (int j = 1; j <= n; j++)
+                {
+                    if (a[i - 1] == b[j - 1])
+                        table[i, j] = table[i - 1, j - 1] + 1;
+                    else
+                        table[i, j] = Math.Max(table[i - 1, j], table[i, j - 1]);
+                }
+            }
+            return table;
         }
+        /// <summary>
+        /// Recursively build a string with inline [+insert] and [-delete] markers
+        /// based on the per-line LCS table.
+        /// </summary>
         private static string BuildHighlightedDiff(int[,] lcs, string[] a, string[] b, int i, int j)
         {
             if (i > 0 && j > 0 && a[i - 1] == b[j - 1])

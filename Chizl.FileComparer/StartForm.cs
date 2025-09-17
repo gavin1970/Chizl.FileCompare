@@ -79,8 +79,53 @@ namespace Chizl.FileComparer
 
             if (File.Exists(_fileIconName))
                 this.Icon = Common.GetIcon(_fileIconName);
-        }
 
+            //LoadTestRtf();
+        }
+        private void LoadTestRtf()
+        {
+            var myText = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor " +
+                         "incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud " +
+                         "exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute " +
+                         "irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla " +
+                         "pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia " +
+                         "deserunt mollit anim id est laborum.";
+
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine("{\\rtf1\\ansi\\ansicpg1250\\deff0\\deflang1050{\\fonttbl{\\f0\\fnil\\fcharset238 Courier New;}}");
+            sb.AppendLine("{\\colortbl ;\\red0\\green190\\blue0;\\red190\\green0\\blue190;}");
+            sb.AppendLine("\\viewkind4\\uc1\\pard\\f0\\fs17");
+
+            string[] bgCol = new string[] { "\\chcbpat1 ", "\\chcbpat2 " };
+            string[] fgCol = new string[] { "\\cf2 ", "\\cf1 " };
+
+            int ndx = 0;
+            for (int i = 0; i < myText.Length; i++)
+            {
+                if (i != 0)
+                {
+                    if (i % 100 == 0)
+                        sb.Append("\\par ");    //carriage return
+
+                    if (i % 10 == 0)
+                    {
+                        sb.Append("\\chcbpat0 ");   //turn BG color off
+                        sb.Append("\\cf0 ");        //turn FG color off
+                    }
+                    else if (i % 5 == 0)
+                    {
+                        ndx = ndx == 1 ? 0 : 1;
+                        sb.Append(bgCol[ndx]);
+                        sb.Append(fgCol[ndx]);
+                    }
+                }
+
+                sb.Append(myText[i]);
+            }
+            sb.Append("\\par\r\n}\r\n");
+
+            OldAsciiContent.Rtf = sb.ToString();
+        }
         private void StartForm_ResizeBegin(object sender, EventArgs e) => _formResizing = true;
         private void StartForm_ResizeEnd(object sender, EventArgs e)
         {
@@ -256,243 +301,6 @@ namespace Chizl.FileComparer
             }
         }
 
-        /// <summary>
-        /// This method was seperated so it can be used to call, without doing a full compare on the files again.
-        /// This will load the RichText components with information, both ASCII or Binary (Hex) View, and show color differences.
-        /// </summary>
-        /// <param name="forceBinary">True to show Ascii in Binary view.</param>
-        /// <param name="sideBySide">False will do an overlay only for Binary view.</param>
-        private void ShowComparison(bool forceBinary = false, bool sideBySide = true)
-        {
-            ClearRichText();
-
-            var prevLineSize = 30;
-            var useBinary = forceBinary || _lastFileComparison.IsBinary;
-
-            if (_lastFileComparison.HasException)
-            {
-                StatusText.Text = $"Error:  {_lastFileComparison.Exception.Message}";
-                StatusText.BackColor = Color.FromArgb(255, 192, 192);
-            }
-            else
-            {
-                StatusText.Text = $"Line by Line Status:  Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change({_lastFileComparison.Diffs.Identical} )";
-                StatusText.BackColor = Color.Yellow;
-            }
-
-            ResetTimer.Enabled = true;
-
-            var lines = _lastFileComparison.LineComparison.OrderBy(o => o.LineNumber).ToArray();
-            var maxPerc = lines.Length;
-            var scrollLineMarker = 0;
-
-            _addPerc.Clear();
-            _delPerc.Clear();
-            _modPerc.Clear();
-
-            if (!useBinary)
-            {
-                var stringFiller = $"{new string(' ', prevLineSize)}\n";
-                foreach (var cmpr in lines)
-                {
-                    scrollLineMarker++;
-
-                    var lineNumber = $"{cmpr.LineNumber:0000}: ";
-                    var lineString = $"{cmpr.LineDiffStr}";
-
-                    //removing any extra that might be residing..
-                    while (lineString.EndsWith("\n") || lineString.EndsWith("\r"))
-                        lineString = lineString.Substring(0, lineString.Length - 1);
-
-                    if (string.IsNullOrWhiteSpace(lineString))
-                    {
-                        stringFiller = $"{new string(' ', prevLineSize)}\n";
-                        lineString = stringFiller;
-                    }
-                    else
-                    {
-                        stringFiller = $"{new string(' ', lineString.Length)}\n";
-                        lineString += "\n";
-                    }
-
-                    AddText(this.OldAsciiContent, $"{lineNumber}", LINE_COLOR);
-                    AddText(this.NewAsciiContent, $"{lineNumber}", LINE_COLOR);
-                    AddText(this.OldAsciiContent, $" ");
-                    AddText(this.NewAsciiContent, $" ");
-
-                    switch (cmpr.DiffType)
-                    {
-                        case DiffType.Added:
-                            _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                            AddText(this.OldAsciiContent, stringFiller, ADD_COLOR);
-                            AddText(this.NewAsciiContent, lineString, ADD_COLOR);
-                            break;
-                        case DiffType.Deleted:
-                            _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                            AddText(this.OldAsciiContent, lineString, DELETE_COLOR);
-                            AddText(this.NewAsciiContent, stringFiller, DELETE_COLOR);
-                            break;
-                        case DiffType.Modified:
-                            _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                            AddModifiedLine(this.OldAsciiContent, cmpr.ByteByByteDiff, false);
-                            AddModifiedLine(this.NewAsciiContent, cmpr.ByteByByteDiff, true);
-                            break;
-                        default:
-                            AddText(this.OldAsciiContent, lineString);
-                            AddText(this.NewAsciiContent, lineString);
-                            break;
-                    }
-                    prevLineSize = lineString.Length;
-                    if (prevLineSize == 0) prevLineSize = 30;
-                }
-
-                // if using project test files, show as CS so that coloring of keywords will work for CSharp.
-                ColourRrbText(this.OldAsciiContent, OldAsciiFile.Text);
-                ColourRrbText(this.NewAsciiContent, NewAsciiFile.Text);
-            }
-            else
-            {
-                var oldPlainText = $"";
-                var newPlainText = $"";
-                var hexSize = 0;
-
-                bool lastByteWasColor = false;
-                var oldRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
-                var newRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
-                scrollLineMarker = 0;
-                var hexCountLineMarker = scrollLineMarker;
-                maxPerc = lines.Length;
-
-                foreach (var cmpr in lines)
-                {
-                    scrollLineMarker++;
-                    var byteCounter = 0;
-
-                    foreach (var byteDff in cmpr.ByteByByteDiff)
-                    {
-                        bool nextHasColor = false;
-                        if (byteCounter < cmpr.ByteByByteDiff.Length - 1)
-                            nextHasColor = cmpr.ByteByByteDiff[byteCounter + 1].DiffType != DiffType.None;
-
-                        if (hexSize.Equals(0))
-                        {
-                            var lineNumber = $"{hexCountLineMarker:X8}";
-                            hexCountLineMarker += 16;
-
-                            oldRtfBuilder.Append($"{lineNumber} ", LINE_COLOR);
-                            if (sideBySide)
-                                newRtfBuilder.Append($"{lineNumber} ", LINE_COLOR);
-                        }
-
-                        hexSize++;
-
-                        var stringFiller = "  ";
-                        var addSpace = byteDff.DiffType.Equals(DiffType.None) || byteDff.Hex.Length < 2;
-                        var hexString = byteDff.Hex;
-
-                        hexString += !nextHasColor && addSpace && hexSize < 16 ? " " : "";
-                        stringFiller += !nextHasColor && addSpace && hexSize < 16 ? " " : "";
-                        lastByteWasColor = byteDff.DiffType != DiffType.None;
-
-                        switch (byteDff.DiffType)
-                        {
-                            case DiffType.Added:
-                                _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
-
-                                if (sideBySide)
-                                {
-                                    newRtfBuilder.Append(hexString, ADD_COLOR);
-                                    newPlainText += byteDff.Str;
-
-                                    oldRtfBuilder.Append(stringFiller, ADD_COLOR);
-                                    oldPlainText += "+";
-                                }
-                                else
-                                {
-                                    oldRtfBuilder.Append(hexString, ADD_COLOR);
-                                    oldPlainText += byteDff.Str;
-                                }
-
-                                break;
-                            case DiffType.Deleted:
-                                _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
-
-                                if (sideBySide)
-                                {
-                                    newRtfBuilder.Append(stringFiller, DELETE_COLOR);
-                                    newPlainText += "-";
-                                }
-
-                                oldRtfBuilder.Append(hexString, DELETE_COLOR);
-                                oldPlainText += byteDff.Str;
-
-                                break;
-                            case DiffType.Modified:
-                                _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
-
-                                if (sideBySide)
-                                {
-                                    newRtfBuilder.Append(hexString, MODIFIED_COLOR);
-                                    newPlainText += byteDff.Str;
-                                }
-
-                                oldRtfBuilder.Append(hexString, MODIFIED_COLOR);
-                                oldPlainText += byteDff.Str;
-
-                                break;
-                            default:
-                                if (sideBySide)
-                                {
-                                    newRtfBuilder.Append(hexString);
-                                    newPlainText += byteDff.Str;
-                                }
-
-                                oldRtfBuilder.Append(hexString);
-                                oldPlainText += byteDff.Str;
-
-                                break;
-                        }
-
-                        if (hexSize >= 16)
-                        {
-                            //the ending of a color in RTF forces a space. We need to remove 1 space to counter it.
-                            var pad = lastByteWasColor ? " " : "  ";
-                            oldRtfBuilder.AppendLine($"{pad}{oldPlainText}");
-                            newRtfBuilder.AppendLine($"{pad}{newPlainText}");
-
-                            hexSize = 0;
-                            newPlainText = "";
-                            oldPlainText = "";
-                        }
-
-                        byteCounter++;
-                    }
-                }
-
-                // "AF " = 3 bytes.
-                var padString = hexSize < 16 ? new string(' ', (16 * 3) - (hexSize * 3)) : "";
-
-                //the ending of a color in RTF forces a space. We need to remove 1 space to counter it.
-                if (lastByteWasColor)
-                    padString = padString.Substring(0, padString.Length - 1);
-
-                oldRtfBuilder.Append(padString);
-                newRtfBuilder.Append(padString);
-
-                oldRtfBuilder.AppendLine($"  {oldPlainText}");
-                newRtfBuilder.AppendLine($"  {newPlainText}");
-
-                this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
-
-                if (sideBySide || !useBinary)
-                    this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
-            }
-
-            this.SplitContainer1.Panel2Collapsed = !sideBySide && useBinary;
-
-            EnableButtons();
-            InvalidateAll();
-        }
         private void CompareFiles()
         {
             if (InvokeRequired)
@@ -570,14 +378,13 @@ namespace Chizl.FileComparer
 
             ResetContent(true);
 
-            var arrayList = DiffTool.ShowInHex(filePath);
+            rtb.Clear();
 
             if (rtb.Name.StartsWith("Old"))
             {
                 if (SplitContainer1.Panel2Collapsed)
                 {
                     SplitContainer1.Panel2Collapsed = false;
-                    //SetFontSize(arrayList[0], rtb);
                     return;
                 }
                 SplitContainer1.Panel2Collapsed = true;
@@ -588,16 +395,14 @@ namespace Chizl.FileComparer
                 if (SplitContainer1.Panel1Collapsed)
                 {
                     SplitContainer1.Panel1Collapsed = false;
-                    //SetFontSize(arrayList[0], rtb);
                     return;
                 }
                 SplitContainer1.Panel1Collapsed = true;
                 SplitContainer1.Panel2Collapsed = false;
             }
 
-            //SetFontSize(arrayList[0], rtb);
-
-            foreach (var line in arrayList)
+            //var arrayList = DiffTool.ShowInHex(filePath);
+            foreach (var line in DiffTool.ShowInHex(filePath))
             {
                 AddText(rtb, $"{line.Offset}  ", BACK_COLOR, OFFSET_COLOR);
                 AddText(rtb, $"{line.HexValues}  ", BACK_COLOR, HEX_COLOR);
@@ -649,19 +454,6 @@ namespace Chizl.FileComparer
             var newEnabled = !string.IsNullOrWhiteSpace(this.NewAsciiFile.Text) && File.Exists(this.NewAsciiFile.Text) && this.NewAsciiContent.Text.Length > 0;
             this.NewBinaryViewButton.Enabled = newEnabled;
             this.NewFileViewButton.Enabled = newEnabled;
-        }
-        private void SetFontSize(ByteLineLevel bhv, RichTextBox rtb)
-        {
-            rtb.Clear();
-            rtb.Font = new Font(rtb.Font.FontFamily, 6.25f);
-
-            AddText(rtb, $"{bhv.Offset}  ", BACK_COLOR, OFFSET_COLOR);
-            AddText(rtb, $"{bhv.HexValues}  ", BACK_COLOR, HEX_COLOR);
-            AddText(rtb, $"{bhv.PrintableChars}\n", BACK_COLOR, PRINTABLE_COLOR);
-
-            SetCurrentFontSize(rtb);
-
-            rtb.Clear();
         }
         private void SetCurrentFontSize(RichTextBox rtb)
         {
@@ -738,6 +530,252 @@ namespace Chizl.FileComparer
             StatusText.BackColor = SystemColors.ControlDark;
         }
         private void OverlayDropdown_SelectedIndexChanged(object sender, EventArgs e) => _isSideBySide = OverlayDropdown.SelectedIndex.Equals(0);
+        /// <summary>
+        /// This method was seperated so it can be used to call, without doing a full compare on the files again.
+        /// This will load the RichText components with information, both ASCII or Binary (Hex) View, and show color differences.
+        /// </summary>
+        /// <param name="forceBinary">True to show Ascii in Binary view.</param>
+        /// <param name="sideBySide">False will do an overlay only for Binary view.</param>
+        private void ShowComparison(bool forceBinary = false, bool sideBySide = true)
+        {
+            ClearRichText();
+
+            var prevLineSize = 30;
+            var useBinary = forceBinary || _lastFileComparison.IsBinary;
+
+            if (_lastFileComparison.HasException)
+            {
+                StatusText.Text = $"Error:  {_lastFileComparison.Exception.Message}";
+                StatusText.BackColor = Color.FromArgb(255, 192, 192);
+            }
+            else
+            {
+                StatusText.Text = $"Line by Line Status:  Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change({_lastFileComparison.Diffs.Identical} )";
+                StatusText.BackColor = Color.Yellow;
+            }
+
+            ResetTimer.Enabled = true;
+
+            var lines = _lastFileComparison.LineComparison.OrderBy(o => o.LineNumber).ToArray();
+            var maxPerc = lines.Length;
+            var scrollLineMarker = 0;
+            StatusText.Tag = $"Lines: {lines.Length} / {lines.Count()}";
+
+            _addPerc.Clear();
+            _delPerc.Clear();
+            _modPerc.Clear();
+
+            var oldRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
+            var newRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
+
+            if (!useBinary)
+            {
+                var stringFiller = $"{new string(' ', prevLineSize)}\n";
+                foreach (var cmpr in lines)
+                {
+                    scrollLineMarker++;
+
+                    var lineNumber = $"{cmpr.LineNumber:0000}: ";
+                    var lineString = $"{cmpr.LineDiffStr}";
+
+                    //removing any extra that might be residing..
+                    while (lineString.EndsWith("\n") || lineString.EndsWith("\r"))
+                        lineString = lineString.Substring(0, lineString.Length - 1);
+
+                    if (string.IsNullOrWhiteSpace(lineString))
+                    {
+                        stringFiller = $"{new string(' ', prevLineSize)}\n";
+                        lineString = stringFiller;
+                    }
+                    else
+                    {
+                        stringFiller = $"{new string(' ', lineString.Length)}\n";
+                        lineString += "\n";
+                    }
+
+                    oldRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
+                    oldRtfBuilder.Append($" ");
+                    newRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
+                    newRtfBuilder.Append($" ");
+
+                    switch (cmpr.DiffType)
+                    {
+                        case DiffType.Added:
+                            _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                            oldRtfBuilder.AppendLine($"{stringFiller}", ADD_COLOR);
+                            newRtfBuilder.AppendLine($"{lineString}", ADD_COLOR);
+                            break;
+                        case DiffType.Deleted:
+                            _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                            oldRtfBuilder.AppendLine($"{lineString}", DELETE_COLOR);
+                            newRtfBuilder.AppendLine($"{stringFiller}", DELETE_COLOR);
+                            break;
+                        case DiffType.Modified:
+                            _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                            for (int i = 0; i < cmpr.ByteByByteDiff.Length; i++)
+                            {
+                                var b = cmpr.ByteByByteDiff[i];
+                                var color = DELETE_COLOR;
+                                switch (b.DiffType)
+                                {
+                                    case DiffType.Added:
+                                        newRtfBuilder.Append($"{b.Str}", ADD_COLOR);
+                                        break;
+                                    case DiffType.Deleted:
+                                        oldRtfBuilder.Append($"{b.Str}", DELETE_COLOR);
+                                        break;
+                                    case DiffType.Modified:
+                                    case DiffType.None:
+                                        oldRtfBuilder.Append($"{b.Str}", MODIFIED_COLOR);
+                                        newRtfBuilder.Append($"{b.Str}", MODIFIED_COLOR);
+                                        break;
+                                }
+                            }
+                            oldRtfBuilder.AppendLine("");   //add carriage return
+                            newRtfBuilder.AppendLine("");   //add carriage return
+                            break;
+                        default:
+                            oldRtfBuilder.AppendLine($"{lineString}");
+                            newRtfBuilder.AppendLine($"{lineString}");
+                            break;
+                    }
+                    prevLineSize = lineString.Length;
+                    if (prevLineSize == 0) prevLineSize = 30;
+                }
+            }
+            else
+            {
+                scrollLineMarker = 0;
+
+                var oldPlainText = $"";
+                var newPlainText = $"";
+                var hexSize = 0;
+
+                var hexCountLineMarker = scrollLineMarker;
+                maxPerc = lines.Length;
+
+                foreach (var cmpr in lines)
+                {
+                    scrollLineMarker++;
+                    var byteCounter = 0;
+
+                    foreach (var byteDff in cmpr.ByteByByteDiff)
+                    {
+                        if (hexSize.Equals(0))
+                        {
+                            var lineNumber = $"{hexCountLineMarker:X8}";
+                            hexCountLineMarker += 16;
+
+                            oldRtfBuilder.Append($" {lineNumber}h ", LINE_COLOR);
+                            oldRtfBuilder.Append(" ");
+                            if (sideBySide)
+                            {
+                                newRtfBuilder.Append($" {lineNumber}h ", LINE_COLOR);
+                                newRtfBuilder.Append(" ");
+                            }
+                        }
+
+                        hexSize++;
+
+                        var stringFiller = "  ";
+                        var hexString = byteDff.Hex;
+
+                        hexString += hexSize < 16 ? " " : "";
+                        stringFiller += hexSize < 16 ? " " : "";
+
+                        switch (byteDff.DiffType)
+                        {
+                            case DiffType.Added:
+                                _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
+                                if (sideBySide)
+                                {
+                                    newRtfBuilder.Append(hexString, ADD_COLOR);
+                                    newPlainText += byteDff.Str;
+
+                                    oldRtfBuilder.Append(stringFiller, ADD_COLOR);
+                                    oldPlainText += "+";
+                                }
+                                else
+                                {
+                                    oldRtfBuilder.Append(hexString, ADD_COLOR);
+                                    oldPlainText += byteDff.Str;
+                                }
+
+                                break;
+                            case DiffType.Deleted:
+                                _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
+                                if (sideBySide)
+                                {
+                                    newRtfBuilder.Append(stringFiller, DELETE_COLOR);
+                                    newPlainText += "-";
+                                }
+
+                                oldRtfBuilder.Append(hexString, DELETE_COLOR);
+                                oldPlainText += byteDff.Str;
+
+                                break;
+                            case DiffType.Modified:
+                                _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
+
+                                if (sideBySide)
+                                {
+                                    newRtfBuilder.Append(hexString, MODIFIED_COLOR);
+                                    newPlainText += byteDff.Str;
+                                }
+
+                                oldRtfBuilder.Append(hexString, MODIFIED_COLOR);
+                                oldPlainText += byteDff.Str;
+
+                                break;
+                            default:
+                                if (sideBySide)
+                                {
+                                    newRtfBuilder.Append(hexString);
+                                    newPlainText += byteDff.Str;
+                                }
+
+                                oldRtfBuilder.Append(hexString);
+                                oldPlainText += byteDff.Str;
+
+                                break;
+                        }
+
+                        if (hexSize >= 16)
+                        {
+                            //the ending of a color in RTF forces a space. We need to remove 1 space to counter it.
+                            oldRtfBuilder.AppendLine($"  {oldPlainText}");
+                            newRtfBuilder.AppendLine($"  {newPlainText}");
+
+                            hexSize = 0;
+                            newPlainText = "";
+                            oldPlainText = "";
+                        }
+
+                        byteCounter++;
+                    }
+                }
+
+                // "AF " = 3 bytes.
+                var padString = hexSize < 16 ? new string(' ', (16 * 3) - (hexSize * 3)) : "";
+                oldRtfBuilder.Append(padString);
+                newRtfBuilder.Append(padString);
+
+                oldRtfBuilder.AppendLine($"  {oldPlainText}");
+                newRtfBuilder.AppendLine($"  {newPlainText}");
+            }
+
+            this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
+
+            if (sideBySide || !useBinary)
+                this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
+
+            this.SplitContainer1.Panel2Collapsed = !sideBySide && useBinary;
+
+            EnableButtons();
+            InvalidateAll();
+        }
 
         /// <summary>
         /// Use to sync up ZoomFactor between RichTextBoxes.

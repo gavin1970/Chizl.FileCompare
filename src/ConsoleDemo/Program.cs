@@ -79,7 +79,7 @@ namespace ConsoleDemo
 
             Console.WriteLine("Ascii DIY View:");
 
-            var fileComparison = DiffTool.CompareString(src, trg);
+            var fileComparison = DiffTool.CompareFiles(src, trg);
             foreach (var cmpr in fileComparison.LineComparison)
                 Console.WriteLine(cmpr.LineDiffStr.Replace("\n", "?"));
 

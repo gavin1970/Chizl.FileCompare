@@ -28,13 +28,13 @@ namespace Chizl.Rtf
          \cf2 = Green for added bytes
         /**/
 
-        const string START_RTF_ANSI_PAGE = @"{\rtf1\ansi\deff0";
         // 1st Font Index, (17/2 = 8.5pt)
-        const string FONT_FAMILY_SIZE = @"{\fonttbl{\f0\fnil\fcharset0 Courier New;}}\f0\fs17";
+        //const string FONT_FAMILY_SIZE = @"{\fonttbl{\f0\fnil\fcharset0 Courier New;}}\f0\fs17";
+        const string FONT_FAMILY_SIZE = @"{\rtf1\ansi\ansicpg1250\deff0\deflang1050{\fonttbl{\f0\fnil\fcharset238 Courier New;}}\fs17\r\n"; //\r\n
 
         const string START_COLORS = @"{\colortbl;";
-        const string EMPTY_FGCOLOR = @"\cf0\~";
-        const string EMPTY_BGCOLOR = @"\chcbpat0\~";
+        const string EMPTY_FGCOLOR = @"\cf0";       //\~
+        const string EMPTY_BGCOLOR = @"\chcbpat0 ";
         const string FGCOLOR = @"\cf";
         const string BGCOLOR = @"\chcbpat";
 
@@ -75,54 +75,60 @@ namespace Chizl.Rtf
 
         public void Clear() => RtfSetupPage();
         private string _removeSpace = "";
+        private Color _bgPrevColor = Color.Empty;
+        private Color _fgPrevColor = Color.Empty;
         internal void AddText(string text, Color bg, Color fg, bool endLine)
         {
-            var rtfSpace = "\\~";
+            var rtfSpace = " ";
             if (!string.IsNullOrEmpty(text))
             {
-                if ((!bg.IsEmpty || !fg.IsEmpty) && _removeSpace.Length != 0)
+                //if previous background color wasn't empty and now it is, we want to reset color to default.
+                if (!_bgPrevColor.IsEmpty && bg.IsEmpty)
                 {
-                    //because \~ creates a space and space is required after a
-                    //RTF command, commands can be confused with following text
-                    //without a space between them.  If another command is next,
-                    //this allows command to override the forced space, so
-                    //extra spaces are not showing up on the UI.
-                    var removed = _contentTextRtf.RemoveEnding(_removeSpace.AsSpan(), false);
+                    _contentTextRtf.Append(EMPTY_BGCOLOR);
+                    _bgPrevColor = bg;
                 }
-
-                if (!bg.IsEmpty)
+                //if previous foreground color wasn't empty and now it is, we want to reset color to default.
+                if (!_fgPrevColor.IsEmpty && fg.IsEmpty)
+                {
+                    _contentTextRtf.Append(EMPTY_FGCOLOR);
+                    _fgPrevColor = fg;
+                }
+                //if background color isn't empty and previous background is different than new color, lets set color.
+                if (!bg.IsEmpty && !_bgPrevColor.Equals(bg))
+                {
                     _contentTextRtf.Append($"{BGCOLOR}{_colorTableManager.GetIndex(bg)}{rtfSpace}");
-                if (!fg.IsEmpty)
+                    _bgPrevColor = bg;
+                }
+                //if foregroundcolor isn't empty and previous foregroundis different than new color, lets set color.
+                if (!fg.IsEmpty && !_fgPrevColor.Equals(fg))
+                {
                     _contentTextRtf.Append($"{FGCOLOR}{_colorTableManager.GetIndex(fg)}{rtfSpace}");
+                    _fgPrevColor = fg;
+                }
 
                 _contentTextAscii.Append(text);
                 _contentTextRtf.Append(
                     text.Replace(@"\", @"\\")
                         .Replace("{", @"\{")
                         .Replace("}", @"\}"));
-
-                if (!bg.IsEmpty)
-                    _contentTextRtf.Append(EMPTY_BGCOLOR);
-                if (!fg.IsEmpty)
-                    _contentTextRtf.Append(EMPTY_FGCOLOR);
-
-                if (endLine)
-                {
-                    _contentTextAscii.Append("\n");
-                    _contentTextRtf.Append("\\par");    // \\par = RTF Line Feed, same as "\n"
-                    _removeSpace = "";
-                }
-                else
-                    _removeSpace = !bg.IsEmpty || !fg.IsEmpty ? $"{rtfSpace}" : text.EndsWith(" ") ? " " : "";
             }
+
+            if (endLine)
+            {
+                _contentTextAscii.Append("\n");
+                _contentTextRtf.Append("\\par");    // \\par = RTF Line Feed, same as "\n"
+                _removeSpace = "";
+            }
+            else
+                _removeSpace = !bg.IsEmpty || !fg.IsEmpty ? $"{rtfSpace}" : text.EndsWith(" ") ? " " : "";
         }
 
         private void RtfSetupPage()
         {
             _contentTextAscii.Clear();
             _contentTextRtf.Clear();
-            _contentTextRtf.Append(START_RTF_ANSI_PAGE);      // {\rtf1\ansi\deff0
-            _contentTextRtf.Append(FONT_FAMILY_SIZE);        // font table + default font
+            _contentTextRtf.Append(FONT_FAMILY_SIZE);        // {\rtf1\ansi\deff0 and font table + default font
             _contentTextRtf.Append(START_COLORS);            // {\colortbl;
 
             foreach (var colorIndex in _colorTableManager.ColorArray)

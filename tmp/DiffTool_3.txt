@@ -1,0 +1,315 @@
+using System;
+using System.IO;
+using System.Linq;
+using System.Collections.Generic;
+
+namespace Chizl.FileCompare
+{
+    public sealed class DiffTool
+    {
+        public static ByteLineLevel[] ShowInHex(string fullPath)
+        {
+            var binHexViewList = new List<ByteLineLevel>();
+
+            try
+            {
+                using (FileStream fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read))
+                {
+                    int bytesRead;
+                    byte[] buffer = new byte[16]; // Read 16 bytes at a time for a typical hex view layout
+                    int offset = 0;
+                    int lineNo = 1;
+                    while ((bytesRead = fs.Read(buffer, 0, buffer.Length)) > 0)
+                    {
+                        var bhView = new ByteLineLevel(FileFormat.Binary, lineNo++);
+                        // Display offset
+                        bhView.AddOffset($"{offset:X8}:");
+
+                        // Display hex values
+                        for (int i = 0; i < bytesRead; i++)
+                            bhView.AddToHexStr((char)buffer[i]);
+
+                        binHexViewList.Add(bhView);
+                        offset += bytesRead;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Exception in ShowInHex(\"{fullPath}\"):\n{ex.Message}");
+            }
+
+            return binHexViewList.ToArray();
+        }
+
+        public static ComparisonResults CompareFiles(
+            string sourceFile, string targetFile,
+            double scoreThreshold = 0.30, byte lineLookAhead = 3)
+        {
+            if (!File.Exists(sourceFile))
+                return new ComparisonResults(new ArgumentException($"{nameof(sourceFile)} not found"));
+            if (!File.Exists(targetFile))
+                return new ComparisonResults(new ArgumentException($"{nameof(targetFile)} not found"));
+
+            // Binary detection first
+            var sourceInfo = new FileLevel(sourceFile);
+            var targetInfo = new FileLevel(targetFile);
+            if (sourceInfo.IsBinary || targetInfo.IsBinary)
+                return BinaryComparer.CompareFiles(sourceInfo, targetInfo);
+
+            // Stream file lines
+            var a = ReadLines(sourceFile).ToList();
+            var b = ReadLines(targetFile).ToList();
+
+            var rawEdits = MyersDiff(a, b);
+            var merged = MergeSimilarChanges(rawEdits, lineLookAhead, scoreThreshold);
+
+            var results = new List<CompareDiff>();
+            int lineNo = 0;
+            foreach (var (tag, text) in merged)
+            {
+                DiffType diffType;
+                switch (tag)
+                {
+                    case "+":
+                        diffType = DiffType.Added;
+                        break;
+                    case "-":
+                        diffType = DiffType.Deleted;
+                        break;
+                    case "~":
+                        diffType = DiffType.Modified;
+                        break;
+                    default:
+                        diffType = DiffType.None;
+                        break;
+                }
+                results.Add(new CompareDiff(diffType, ++lineNo, text));
+            }
+
+            return new ComparisonResults(results, false);
+        }
+
+        // Myers core (unchanged from before)
+        public static List<(string Tag, string Text)> MyersDiff(
+            IList<string> a, IList<string> b)
+        {
+            var result = new List<(string, string)>();
+            var ses = MyersDiffInternal(a, b);
+            foreach (var (op, i1, i2, j1, j2) in ses)
+            {
+                if (op == ' ')
+                {
+                    for (int i = i1; i < i2; i++)
+                        result.Add((" ", a[i]));
+                }
+                else if (op == '-')
+                {
+                    for (int i = i1; i < i2; i++)
+                        result.Add(("-", a[i]));
+                }
+                else if (op == '+')
+                {
+                    for (int j = j1; j < j2; j++)
+                        result.Add(("+", b[j]));
+                }
+                else if (op == '~')
+                {
+                    for (int j = j1; j < j2; j++)
+                        result.Add(("!", b[j]));
+                }
+            }
+            return result;
+        }
+
+        // Myers internals (same as before, omitted for brevity) …
+        // MyersDiffInternal + Backtrack
+        // ...
+
+        private static List<(string Tag, string Text)> MergeSimilarChanges(
+            List<(string Tag, string Text)> diff,
+            int windowSize,
+            double scoreThreshold)
+        {
+            var merged = new List<(string, string)>();
+            for (int i = 0; i < diff.Count; i++)
+            {
+                if (diff[i].Tag == "-")
+                {
+                    int matchIndex = -1;
+                    double bestScore = 0;
+
+                    // Lookahead for '+' within window
+                    for (int w = 1; w <= windowSize && i + w < diff.Count; w++)
+                    {
+                        if (diff[i + w].Tag == "+")
+                        {
+                            double score = Similarity(diff[i].Text, diff[i + w].Text);
+                            if (score > scoreThreshold && score > bestScore)
+                            {
+                                bestScore = score;
+                                matchIndex = i + w;
+                            }
+                        }
+                    }
+
+                    if (matchIndex != -1)
+                    {
+                        merged.Add(("~", HighlightCharChanges(diff[i].Text, diff[matchIndex].Text)));
+
+                        // copy everything between - and + except matched +
+                        for (int k = i + 1; k < matchIndex; k++)
+                            merged.Add(diff[k]);
+
+                        i = matchIndex;
+                        continue;
+                    }
+                }
+                merged.Add(diff[i]);
+            }
+            return merged;
+        }
+
+        private static double Similarity(string a, string b)
+        {
+            int same = a.Zip(b, (ca, cb) => ca == cb ? 1 : 0).Sum();
+            return (double)same / Math.Max(a.Length, b.Length);
+        }
+
+        private static string HighlightCharChanges(string oldLine, string newLine)
+        {
+            var oldChars = oldLine.Select(c => c.ToString()).ToArray();
+            var newChars = newLine.Select(c => c.ToString()).ToArray();
+
+            var lcs = BuildLcsTable(oldChars, newChars);
+            return BuildHighlightedDiff(lcs, oldChars, newChars, oldChars.Length, newChars.Length);
+        }
+        private static List<(char op, int i1, int i2, int j1, int j2)>
+        MyersDiffInternal(IList<string> a, IList<string> b)
+        {
+            int n = a.Count, m = b.Count;
+            int max = n + m;
+            var v = new Dictionary<int, int> { [1] = 0 };
+            var trace = new List<Dictionary<int, int>>();
+
+            for (int d = 0; d <= max; d++)
+            {
+                var vCopy = new Dictionary<int, int>(v);
+                trace.Add(vCopy);
+
+                for (int k = -d; k <= d; k += 2)
+                {
+                    int x;
+                    if (k == -d || (k != d && v[k - 1] < v[k + 1]))
+                        x = v[k + 1];
+                    else
+                        x = v[k - 1] + 1;
+                    int y = x - k;
+
+                    while (x < n && y < m && a[x] == b[y])
+                    {
+                        x++;
+                        y++;
+                    }
+                    v[k] = x;
+
+                    if (x >= n && y >= m)
+                        return Backtrack(trace, a, b);
+                }
+            }
+            throw new Exception("Diff failed");
+        }
+        private static List<(char op, int i1, int i2, int j1, int j2)>
+                Backtrack(List<Dictionary<int, int>> trace,
+                          IList<string> a, IList<string> b)
+        {
+            int x = a.Count, y = b.Count;
+            var result = new List<(char, int, int, int, int)>();
+
+            for (int d = trace.Count - 1; d >= 0; d--)
+            {
+                var v = trace[d];
+                int k = x - y;
+                int prevK;
+                int prevX;
+
+                if (k == -d || (k != d && v[k - 1] < v[k + 1]))
+                {
+                    prevK = k + 1;
+                    prevX = v[prevK];
+                }
+                else
+                {
+                    prevK = k - 1;
+                    prevX = v[prevK] + 1;
+                }
+
+                int prevY = prevX - prevK;
+
+                while (x > prevX && y > prevY)
+                {
+                    result.Add((' ', x - 1, x, y - 1, y));
+                    x--;
+                    y--;
+                }
+
+                if (d > 0)
+                {
+                    if (x == prevX)
+                    {
+                        result.Add(('+', x, x, prevY, y));
+                    }
+                    else
+                    {
+                        result.Add(('-', prevX, x, y, y));
+                    }
+                }
+
+                x = prevX;
+                y = prevY;
+            }
+
+            result.Reverse();
+            return result;
+        }
+        private static int[,] BuildLcsTable(string[] a, string[] b)
+        {
+            int m = a.Length, n = b.Length;
+            var table = new int[m + 1, n + 1];
+            for (int i = 1; i <= m; i++)
+            {
+                for (int j = 1; j <= n; j++)
+                {
+                    if (a[i - 1] == b[j - 1])
+                        table[i, j] = table[i - 1, j - 1] + 1;
+                    else
+                        table[i, j] = Math.Max(table[i - 1, j], table[i, j - 1]);
+                }
+            }
+            return table;
+        }
+
+        private static string BuildHighlightedDiff(int[,] lcs, string[] a, string[] b, int i, int j)
+        {
+            if (i > 0 && j > 0 && a[i - 1] == b[j - 1])
+                return BuildHighlightedDiff(lcs, a, b, i - 1, j - 1) + a[i - 1];
+            else if (j > 0 && (i == 0 || lcs[i, j - 1] >= lcs[i - 1, j]))
+                return BuildHighlightedDiff(lcs, a, b, i, j - 1) + "[+" + b[j - 1] + "]";
+            else if (i > 0 && (j == 0 || lcs[i, j - 1] < lcs[i - 1, j]))
+                return BuildHighlightedDiff(lcs, a, b, i - 1, j) + "[-" + a[i - 1] + "]";
+            return "";
+        }
+        private static IEnumerable<string> ReadLines(string filePath)
+        {
+            using (var reader = new StreamReader(filePath))
+            {
+                string line;
+                while ((line = reader.ReadLine()) != null)
+                {
+                    yield return line;
+                }
+            }
+        }
+    }
+
+}

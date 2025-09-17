@@ -1,5 +1,12 @@
 ﻿namespace Chizl.FileCompare
 {
+    public enum LoadContentType
+    {
+        Canceled,
+        InMemory,
+        Stream
+    }
+
     public enum DiffType
     {
         None,

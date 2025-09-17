@@ -1,14 +1,22 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace Chizl.FileCompare
 {
-    public class FileLevel
+    public class FileLevel : IDisposable
     {
         const int _maxContentFileSize = ((1024 * 1024) * 5);   //5MB
-        //private List<LineLevel> _lineLevels = new List<LineLevel>();
+        private bool disposedValue;
+        //private LoadContentType _loadedType;
+        private byte[] _bytes;
+        private string[] _content;
+        //private FileStream _fileStream;
 
-        internal FileLevel(string fullPath)
+        #region Constructor/Deconstructor
+        public FileLevel(string fullPath)
         {
+            //working on DiffTool when this is a parameter.
+            LoadContentType loadContentType = LoadContentType.InMemory;
             var fi = new FileInfo(fullPath);
 
             this.FullPath = fi.FullName;
@@ -18,26 +26,73 @@ namespace Chizl.FileCompare
 
             if (this.Exists)
             {
-                this.Bytes = File.ReadAllBytes(fi.FullName);
-                this.Format = Common.IsBinary(this.Bytes, this.Bytes.Length, out string err)
-                              && string.IsNullOrWhiteSpace(err) 
-                                ? FileFormat.Binary 
-                                : FileFormat.Ascii;
-
                 if (fi.Length > int.MaxValue)
                     this.Size = new FileSize(int.MaxValue);
                 else
                     this.Size = new FileSize((int)fi.Length);
 
-                if (this.Format.Equals(FileFormat.Ascii) && this.Size.Format_ByteSize < _maxContentFileSize)
-                    this.Content = File.ReadAllLines(fi.FullName);
+                var sizeFits = this.Size.Format_ByteSize <= _maxContentFileSize;
+
+                if (!sizeFits)  //remove this in the future, will auto set if too large.
+                    throw new Exception($"File: '{fi.FullName}' is too large '{this.Size.Format_ByteSize.FormatByteSize()}' in " +
+                                        $"size to load into memory at this time.  Max is set to '{_maxContentFileSize.FormatByteSize()}'.  " +
+                                        $"Future versions will be streaming content.");
+
+                if (loadContentType == LoadContentType.InMemory)
+                {
+                    //if (sizeFits) 
+                    //{
+                        _bytes = File.ReadAllBytes(fi.FullName);
+                        //_loadedType = LoadContentType.InMemory;
+                    //}
+                    //else
+                    //{
+                    //    _loadedType = LoadContentType.Stream;
+                    //    _fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
+                    //}
+                }
+                //else if (loadContentType == LoadContentType.InMemory && !sizeFits)
+
+                this.Format = Common.IsBinary(this.Bytes, this.Bytes.Length, out string err)
+                                && string.IsNullOrWhiteSpace(err)
+                                ? FileFormat.Binary
+                                : FileFormat.Ascii;
+
+                if (loadContentType == LoadContentType.InMemory
+                    && this.Format.Equals(FileFormat.Ascii) && sizeFits)
+                    _content = File.ReadAllLines(fi.FullName);
 
                 this.Pointer = 0;
             }
         }
+        protected virtual void Dispose(bool disposing)
+        {
+            if (!disposedValue)
+            {
+                if (disposing)
+                {
+                    //_fileStream?.Close();
+                    //_fileStream?.Dispose();
+                }
+
+                disposedValue = true;
+            }
+        }
+        ~FileLevel() => Dispose(disposing: false);
+        public void Dispose()
+        {
+            // Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+            Dispose(disposing: true);
+            GC.SuppressFinalize(this);
+        }
+        #endregion
+
         internal int Pointer { get; set; }
-        public byte[] Bytes { get; }
-        public string[] Content { get; }
+
+        //public LoadContentType LoadedType { get { return _loadedType; } }
+        //public FileStream FileStream { get { return _fileStream; } }
+        public byte[] Bytes { get { return _bytes; } }
+        public string[] Content { get { return _content; } }
         public string FullPath { get; }
         public string Name { get; }
         public string Folder { get; }
@@ -46,28 +101,5 @@ namespace Chizl.FileCompare
         public bool IsBinary { get { return Format.Equals(FileFormat.Binary); } }
         public bool IsAscii { get { return Format.Equals(FileFormat.Ascii); } }
         public FileFormat Format { get; } = FileFormat.NotSet;
-        //public LineLevel[] Lines { get { return _lineLevels.ToArray(); } }
-
-        //internal void AddLine(LineLevel level) => _lineLevels.Add(level);
-        //internal void RemoveLine(Guid lineID)
-        //{
-        //    var lineLevel = _lineLevels.FirstOrDefault(w => w.LineID.Equals(lineID));
-        //    if (lineLevel.Bytes.Length > 0)
-        //        RemoveLine(lineLevel);
-        //}
-        //internal void RemoveLine(LineLevel lineLevel) => _lineLevels.Remove(lineLevel);
-        //internal void Clear() => _lineLevels.Clear();
-    }
-    public class FileSize
-    {
-        internal FileSize(int sizeInBytes)
-        {
-            this.Format_ByteSize = sizeInBytes;
-            this.Format_ByteSize_Comma = sizeInBytes.FormatByComma();
-            this.Format_Standard = sizeInBytes.FormatByteSize();
-        }
-        public int Format_ByteSize { get; }
-        public string Format_ByteSize_Comma { get; }
-        public string Format_Standard { get; }
     }
 }
