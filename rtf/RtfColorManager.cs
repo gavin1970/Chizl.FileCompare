@@ -4,8 +4,16 @@ using System.Collections.Generic;
 
 namespace Chizl.Rtf
 {
+    internal enum Color_Appearance
+    {
+        Foreground = 0,
+        Background = 1,
+    }
+
     internal class RtfColorManager
     {
+        readonly string[] ColorAppearances = new string[2] { @"\cf", @"\chcbpat" };
+
         private readonly List<Color> _colors = new List<Color>();
         public RtfColorManager(Color[] colors)
         {
@@ -18,7 +26,8 @@ namespace Chizl.Rtf
                 if (!_colors.Contains(c))
                     _colors.Add(c);
             }
-        } 
+        }
+        public string GetIndex(Color color, Color_Appearance appearance) => $"{ColorAppearances[(int)appearance]}{GetIndex(color)} ";
         public int GetIndex(Color color)
         {
             int index = _colors.FindIndex(c => c == color);

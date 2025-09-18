@@ -582,7 +582,9 @@ namespace Chizl.FileComparer
             _modPerc.Clear();
 
             var oldRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
+            var oldTextBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, false);
             var newRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
+            var newTextBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, false);
 
             if (!useBinary)
             {
@@ -714,15 +716,18 @@ namespace Chizl.FileComparer
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(hexString, ADD_COLOR);
-                                    newPlainText += byteDff.Str;
+                                    newTextBuilder.Append(byteDff.Str, ADD_COLOR);
+                                    //newPlainText += byteDff.Str;
 
                                     oldRtfBuilder.Append(stringFiller, ADD_COLOR);
-                                    oldPlainText += "+";
+                                    oldTextBuilder.Append("+", ADD_COLOR);
+                                    //oldPlainText += "+";
                                 }
                                 else
                                 {
                                     oldRtfBuilder.Append(hexString, ADD_COLOR);
-                                    oldPlainText += byteDff.Str;
+                                    oldTextBuilder.Append(byteDff.Str, ADD_COLOR);
+                                    //oldPlainText += byteDff.Str;
                                 }
 
                                 break;
@@ -732,11 +737,13 @@ namespace Chizl.FileComparer
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(stringFiller, DELETE_COLOR);
-                                    newPlainText += "-";
+                                    newTextBuilder.Append("-", DELETE_COLOR);
+                                    //newPlainText += "-";
                                 }
 
                                 oldRtfBuilder.Append(hexString, DELETE_COLOR);
-                                oldPlainText += byteDff.Str;
+                                oldTextBuilder.Append(byteDff.Str, DELETE_COLOR);
+                                //oldPlainText += byteDff.Str;
 
                                 break;
                             case DiffType.Modified:
@@ -745,35 +752,40 @@ namespace Chizl.FileComparer
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(hexString, MODIFIED_COLOR);
-                                    newPlainText += byteDff.Str;
+                                    newTextBuilder.Append(byteDff.Str, MODIFIED_COLOR);
+                                    //newPlainText += byteDff.Str;
                                 }
 
                                 oldRtfBuilder.Append(hexString, MODIFIED_COLOR);
-                                oldPlainText += byteDff.Str;
+                                oldTextBuilder.Append(byteDff.Str, MODIFIED_COLOR);
+                                //oldPlainText += byteDff.Str;
 
                                 break;
                             default:
                                 if (sideBySide)
                                 {
                                     newRtfBuilder.Append(hexString);
-                                    newPlainText += byteDff.Str;
+                                    newTextBuilder.Append(byteDff.Str);
+                                    //newPlainText += byteDff.Str;
                                 }
 
                                 oldRtfBuilder.Append(hexString);
-                                oldPlainText += byteDff.Str;
+                                //oldPlainText += byteDff.Str;
+                                oldTextBuilder.Append(byteDff.Str);
 
                                 break;
                         }
 
                         if (hexSize >= 16)
                         {
-                            // the ending of a color in RTF forces a space. We need to remove 1 space to counter it.
-                            oldRtfBuilder.AppendLine($"  {oldPlainText}");
-                            newRtfBuilder.AppendLine($"  {newPlainText}");
+                            oldRtfBuilder.Append("  "); //clears any color that might exist.
+                            newRtfBuilder.Append("  "); //clears any color that might exist.
+                            oldRtfBuilder.AppendLineRtf(oldTextBuilder.GetDocument(true));  //oldPlainText
+                            newRtfBuilder.AppendLineRtf(newTextBuilder.GetDocument(true));  //newPlainText
 
                             hexSize = 0;
-                            newPlainText = "";
-                            oldPlainText = "";
+                            //newPlainText = "";
+                            //oldPlainText = "";
                         }
 
                         byteCounter++;
@@ -782,11 +794,14 @@ namespace Chizl.FileComparer
 
                 // "AF " = 3 bytes.
                 var padString = hexSize < 16 ? new string(' ', (16 * 3) - (hexSize * 3)) : "";
+                
                 oldRtfBuilder.Append(padString);
                 newRtfBuilder.Append(padString);
 
-                oldRtfBuilder.AppendLine($"  {oldPlainText}");
-                newRtfBuilder.AppendLine($"  {newPlainText}");
+                oldRtfBuilder.Append("  "); //clears any color that might exist.
+                newRtfBuilder.Append("  "); //clears any color that might exist.
+                oldRtfBuilder.AppendLineRtf(oldTextBuilder.GetDocument(true));  //oldPlainText
+                newRtfBuilder.AppendLineRtf(newTextBuilder.GetDocument(true));  //newPlainText
             }
 
             this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
