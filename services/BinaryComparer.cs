@@ -1,9 +1,8 @@
 ﻿using System;
-using System.Collections.Concurrent;
-using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Text;
+using System.Collections.Generic;
+using System.Collections.Concurrent;
 
 namespace Chizl.FileCompare
 {
@@ -121,7 +120,6 @@ namespace Chizl.FileCompare
 
             return new ComparisonResults(arrDiffs, true);
         }
-
         private static ConcurrentDictionary<string, int> BuildHashLookups(byte[] byteData, int start, int length, byte startingByte)
         {
             ConcurrentDictionary<string, int> retVal = new ConcurrentDictionary<string, int>();
@@ -147,7 +145,6 @@ namespace Chizl.FileCompare
 
             return retVal;
         }
-
         private static bool FindMatch(byte[] srcBytes, int srcIndex, byte[] trgBytes, int trgIndex, out int srcNext)
         {
             int byteMatch = _foreSight; // adjustable during search.

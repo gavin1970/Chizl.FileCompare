@@ -12,7 +12,6 @@ using System.Collections.Generic;
 using System.Collections.Concurrent;
 using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 
 namespace Chizl.FileComparer
 {
@@ -49,6 +48,8 @@ namespace Chizl.FileComparer
 
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
+        //private string _oldFile = "C:\\Program Files\\TechSmith\\Snagit 2024\\de-DE\\TechSmith Snagit EULA.pdf";
+        //private string _newFile = "C:\\Program Files\\TechSmith\\Snagit 2024\\en-US\\TechSmith Snagit EULA.pdf";
 
         public StartForm(string[] args)
         {
@@ -336,7 +337,8 @@ namespace Chizl.FileComparer
                 var oldFile = this.OldAsciiFile.Text.Replace("\"", "").Replace("'", "");
                 var newFile = this.NewAsciiFile.Text.Replace("\"", "").Replace("'", "");
 
-                Task.Run(() => { _lastFileComparison = DiffTool.CompareFiles(oldFile, newFile, score_threshold, 3); }).Wait();
+                _lastFileComparison = DiffTool.CompareFiles(oldFile, newFile, score_threshold, 3);
+                //Task.Run(() => { _lastFileComparison = DiffTool.CompareFiles(oldFile, newFile, score_threshold, 3); }).Wait();
 
                 // Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists,
                 // check existingvalue and if New File dropdown (2), make it 3, to represent both Old and New
