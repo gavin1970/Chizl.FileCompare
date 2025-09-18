@@ -207,15 +207,6 @@ namespace Chizl.Rtf
                     _fgPrevColor = fg;
                 }
 
-                if (_contentTextAscii.Length.Equals(0) && !_pageSetup)
-                {
-                    if (bg.IsEmpty && !_bgPrevColor.IsEmpty)
-                        _contentTextRtf.Append(_colorTableManager.GetIndex(bg, Color_Appearance.Background));
-                    if (fg.IsEmpty && !_fgPrevColor.IsEmpty)
-                        _contentTextRtf.Append(_colorTableManager.GetIndex(fg, Color_Appearance.Foreground));
-                }
-
-
                 SetSize(fontPtSize);
 
                 _contentTextAscii.Append(text);
