@@ -317,6 +317,8 @@ namespace Chizl.FileComparer
             }
             else if (!Disposing && !IsDisposed)
             {
+                ResetContent();
+
                 // this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
                 // this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
 
