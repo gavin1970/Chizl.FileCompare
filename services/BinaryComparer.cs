@@ -118,7 +118,7 @@ namespace Chizl.FileCompare
                 }
             }
 
-            return new ComparisonResults(arrDiffs, true);
+            return new ComparisonResults(arrDiffs, sourceFile, targetFile);
         }
         private static ConcurrentDictionary<string, int> BuildHashLookups(byte[] byteData, int start, int length, byte startingByte)
         {

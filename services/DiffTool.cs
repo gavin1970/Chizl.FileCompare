@@ -100,12 +100,8 @@ namespace Chizl.FileCompare
                 // Binary path unchanged
                 if (sourceFileInfo.IsBinary || targetFileInfo.IsBinary)
                     return BinaryComparer.CompareFiles(sourceFileInfo, targetFileInfo);
-
-                // Read text lines (Myers is O(N+M) memory). If you already have arrays, call CompareStringArr directly.
-                var a = File.ReadLines(sourceFile).ToArray();
-                var b = File.ReadLines(targetFile).ToArray();
-
-                return CompareStringArr(a, b, scoreThreshold, lineLookAhead);
+                else
+                    return CompareStringArr(sourceFileInfo, targetFileInfo, scoreThreshold, lineLookAhead);
             }
             catch (Exception ex) 
             {
@@ -115,8 +111,12 @@ namespace Chizl.FileCompare
         /// <summary>
         /// Builds results off of scripts from Myers, then merges with an LCS to seperate Added, Deleted, and Modified lines.
         /// </summary>
-        private static ComparisonResults CompareStringArr(string[] linesOld, string[] linesNew, double scoreThreshold = 0.30, byte lineLookAhead = 3)
+        private static ComparisonResults CompareStringArr(FileLevel sourceFileInfo, FileLevel targetFileInfo, double scoreThreshold = 0.30, byte lineLookAhead = 3)
         {
+            // Read text lines (Myers is O(N+M) memory). If you already have arrays, call CompareStringArr directly.
+            string[] linesOld = sourceFileInfo.Content;
+            string[] linesNew = targetFileInfo.Content;
+
             var retVal = new List<CompareDiff>();
             var lineNo = 0;
 
@@ -142,14 +142,14 @@ namespace Chizl.FileCompare
                 }
 
                 var textLine = entry.Text;
-                if (prevSize == 0) prevSize = 30;
+                if (prevSize == 0) prevSize = 32;
                 if (textLine.Length == 0) textLine = new string(' ', prevSize);
 
                 retVal.Add(new CompareDiff(diffType, ++lineNo, textLine));
                 prevSize = textLine.Length;
             }
 
-            return new ComparisonResults(retVal, false);
+            return new ComparisonResults(retVal, sourceFileInfo, targetFileInfo);
         }
         /// <summary>
         /// Robust Myers implementation (array V, trace)

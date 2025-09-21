@@ -28,10 +28,8 @@ namespace Chizl.Rtf
          \cf2 = Green for added bytes
         /**/
 
-        const string FONT_FAMILY_SIZE = @"{\rtf1\ansi\ansicpg1250\deff0\deflang1050{\fonttbl{\f0\fnil\fcharset238 Courier New;}}\fs17\r\n"; // \r\n
+        const string FONT_BASE = @"{\rtf1\ansi\ansicpg1250\deff0\deflang1050{\fonttbl{\f0\fnil\fcharset238 ";
         const string START_COLORS = @"{\colortbl;";
-        const string EMPTY_FGCOLOR = @"\cf0";       // \~
-        const string EMPTY_BGCOLOR = @"\chcbpat0 ";
 
         private readonly RtfColorManager _colorTableManager;
         private readonly StringBuilder _contentTextRtf = new StringBuilder();
@@ -41,7 +39,7 @@ namespace Chizl.Rtf
         private bool _pageSetup = true;
         private int _lastFontSize = 17;
         private int _originalFontSize = 0;     // 17/2 = 8.5pt
-        private string _fontFamilyWithSize = "{\\rtf1\\ansi\\ansicpg1250\\deff0\\deflang1050{\\fonttbl{\\f0\\fnil\\fcharset238 _FONTNAME_;}}\\fs_FONTSIZE_\r\n";
+        private string _fontFamWithSize = FONT_BASE + "_FONTNAME_;}}\\fs_FONTSIZE_\r\n";
 
         /// <summary>
         /// 
@@ -70,7 +68,7 @@ namespace Chizl.Rtf
             // 1st Font Index, (17/2 = 8.5pt)
             _lastFontSize = (int)Math.Round(fontPtSize * 2, 0);
 
-            _fontFamilyWithSize = _fontFamilyWithSize.Replace("_FONTNAME_", fontName).Replace("_FONTSIZE_", _lastFontSize.ToString());
+            _fontFamWithSize = _fontFamWithSize.Replace("_FONTNAME_", fontName).Replace("_FONTSIZE_", _lastFontSize.ToString());
             _colorTableManager = new RtfColorManager(colorIndexList);
             _pageSetup = pageSetup;
             RtfSetupPage();
@@ -151,6 +149,14 @@ namespace Chizl.Rtf
 
             return retVal;
         }
+        public int DocumentSize 
+        { 
+            get 
+            {
+                // +1 because of the final '}' when GetDocument() is called.
+                return _contentTextRtf.Length + 1; 
+            }
+        }
         /// <summary>
         /// View existing RTF context data, which may or may not be complete.<br/>
         /// GetDocument(), will finalize the RTF document with any following RTF requirements.
@@ -175,7 +181,7 @@ namespace Chizl.Rtf
             if (endLine)
             {
                 _contentTextAscii.Append("\n");
-                _contentTextRtf.Append("\\par");    // \\par = RTF Line Feed, same as "\n"
+                _contentTextRtf.Append($"\\par {Environment.NewLine}");    // \\par = RTF Line Feed, same as "\n"
             }
         }
         internal void AddText(string text, Color bg, Color fg, bool endLine, double fontPtSize)
@@ -185,25 +191,26 @@ namespace Chizl.Rtf
                 // if previous background color wasn't empty and now it is, we want to reset color to default.
                 if (!_bgPrevColor.IsEmpty && bg.IsEmpty)
                 {
-                    _contentTextRtf.Append(EMPTY_BGCOLOR);
+                    _contentTextRtf.Append(_colorTableManager.ResetColor(Color_Appearance.Background));
                     _bgPrevColor = bg;
                 }
                 // if previous foreground color wasn't empty and now it is, we want to reset color to default.
                 if (!_fgPrevColor.IsEmpty && fg.IsEmpty)
                 {
-                    _contentTextRtf.Append(EMPTY_FGCOLOR);
+                    //_contentTextRtf.Append(EMPTY_FGCOLOR);
+                    _contentTextRtf.Append(_colorTableManager.ResetColor(Color_Appearance.Foreground));
                     _fgPrevColor = fg;
                 }
                 // if background color isn't empty and previous background is different than new color, lets set color.
                 if (!bg.IsEmpty && !_bgPrevColor.Equals(bg))
                 {
-                    _contentTextRtf.Append(_colorTableManager.GetIndex(bg, Color_Appearance.Background));
+                    _contentTextRtf.Append(_colorTableManager.GetCode(bg, Color_Appearance.Background));
                     _bgPrevColor = bg;
                 }
                 // if foregroundcolor isn't empty and previous foregroundis different than new color, lets set color.
                 if (!fg.IsEmpty && !_fgPrevColor.Equals(fg))
                 {
-                    _contentTextRtf.Append(_colorTableManager.GetIndex(fg, Color_Appearance.Foreground));
+                    _contentTextRtf.Append(_colorTableManager.GetCode(fg, Color_Appearance.Foreground));
                     _fgPrevColor = fg;
                 }
 
@@ -219,7 +226,7 @@ namespace Chizl.Rtf
             if (endLine)
             {
                 _contentTextAscii.Append("\n");
-                _contentTextRtf.Append("\\par");    // \\par = RTF Line Feed, same as "\n"
+                _contentTextRtf.Append($"\\par {Environment.NewLine}");    // \\par = RTF Line Feed, same as "\n"
             }
         }
         private int GetSize(double fontPtSize) => (int)Math.Round(fontPtSize * 2, 0);
@@ -239,7 +246,7 @@ namespace Chizl.Rtf
                 {
                     _lastFontSize = getRtfSize;
                     if (append)
-                        _contentTextAscii.Append($"\\fs{_lastFontSize} ");
+                        _contentTextAscii.Append($"\\fs{_lastFontSize} {Environment.NewLine}");
                 }
             }
         }
@@ -256,8 +263,8 @@ namespace Chizl.Rtf
 
             if (_pageSetup)
             {
-                _contentTextRtf.Append(_fontFamilyWithSize);        // {\rtf1\ansi\deff0 and font table + default font
-                _contentTextRtf.Append(START_COLORS);               // {\colortbl;
+                _contentTextRtf.Append(_fontFamWithSize);       // {\rtf1\ansi\deff0 and font table + default font
+                _contentTextRtf.Append(START_COLORS);           // {\colortbl;
 
                 foreach (var colorIndex in _colorTableManager.ColorArray)
                 {
@@ -266,7 +273,7 @@ namespace Chizl.Rtf
                     _contentTextRtf.Append($"\\red{colorIndex.R}\\green{colorIndex.G}\\blue{colorIndex.B};");
                 }
 
-                _contentTextRtf.Append("}");
+                _contentTextRtf.Append($"}} {Environment.NewLine}");
             }
         }
         private bool ValidFontSize(double fontPtSize, out string msg)

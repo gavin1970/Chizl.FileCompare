@@ -5,12 +5,10 @@ namespace Chizl.FileCompare
 {
     public class FileLevel : IDisposable
     {
-        const int _maxContentFileSize = ((1024 * 1024) * 10);   // 10MB
+        const int _maxContentFileSize = ((1024 * 1024) * 50);   // 50MB
         private bool disposedValue;
-        // private LoadContentType _loadedType;
         private byte[] _bytes;
         private string[] _content;
-        // private FileStream _fileStream;
 
         #region Constructor/Deconstructor
         public FileLevel(string fullPath)
@@ -39,19 +37,7 @@ namespace Chizl.FileCompare
                                         $"Future versions will be streaming content.");
 
                 if (loadContentType == LoadContentType.InMemory)
-                {
-                    // if (sizeFits) 
-                    // {
-                        _bytes = File.ReadAllBytes(fi.FullName);
-                        // _loadedType = LoadContentType.InMemory;
-                    // }
-                    // else
-                    // {
-                    //    _loadedType = LoadContentType.Stream;
-                    //    _fileStream = new FileStream(fullPath, FileMode.Open, FileAccess.Read);
-                    // }
-                }
-                // else if (loadContentType == LoadContentType.InMemory && !sizeFits)
+                    _bytes = File.ReadAllBytes(fi.FullName);
 
                 this.Format = Common.IsBinary(this.Bytes, this.Bytes.Length, out string err)
                                 && string.IsNullOrWhiteSpace(err)
@@ -69,11 +55,7 @@ namespace Chizl.FileCompare
         {
             if (!disposedValue)
             {
-                if (disposing)
-                {
-                    // _fileStream?.Close();
-                    // _fileStream?.Dispose();
-                }
+                if (disposing){}
 
                 disposedValue = true;
             }
@@ -89,8 +71,6 @@ namespace Chizl.FileCompare
 
         internal int Pointer { get; set; }
 
-        // public LoadContentType LoadedType { get { return _loadedType; } }
-        // public FileStream FileStream { get { return _fileStream; } }
         public byte[] Bytes { get { return _bytes; } }
         public string[] Content { get { return _content; } }
         public string FullPath { get; }

@@ -13,6 +13,7 @@ namespace Chizl.Rtf
     internal class RtfColorManager
     {
         readonly string[] ColorAppearances = new string[2] { @"\cf", @"\chcbpat" };
+        const int RESET_COLOR = 0;
 
         private readonly List<Color> _colors = new List<Color>();
         public RtfColorManager(Color[] colors)
@@ -27,7 +28,8 @@ namespace Chizl.Rtf
                     _colors.Add(c);
             }
         }
-        public string GetIndex(Color color, Color_Appearance appearance) => $"{ColorAppearances[(int)appearance]}{GetIndex(color)} ";
+        public string ResetColor(Color_Appearance appearance) => $"{ColorAppearances[(int)appearance]}{RESET_COLOR} ";
+        public string GetCode(Color color, Color_Appearance appearance) => $"{ColorAppearances[(int)appearance]}{GetIndex(color)} ";
         public int GetIndex(Color color)
         {
             int index = _colors.FindIndex(c => c == color);

@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
 using System.Linq;
 
 namespace Chizl.FileCompare
@@ -36,9 +38,11 @@ namespace Chizl.FileCompare
         /// </summary>
         /// <param name="compareDiffs">List of per-line comparison results.</param>
         /// <param name="isBinary">True if the files compared were binary; otherwise false.</param>
-        internal ComparisonResults(List<CompareDiff> compareDiffs, bool isBinary = false)
+        internal ComparisonResults(List<CompareDiff> compareDiffs, FileLevel sourceFile, FileLevel targetFile)
         {
-            this.IsBinary = isBinary;
+            this.SourceFile = sourceFile;
+            this.TargetFile = targetFile;
+            this.IsBinary = sourceFile.IsBinary || targetFile.IsBinary;
             this.LineComparison = compareDiffs.ToArray();
             this.Diffs = new DiffCounts(
                 compareDiffs.Count(w => w.DiffType == DiffType.Added),
@@ -53,6 +57,16 @@ namespace Chizl.FileCompare
         /// The <see cref="IsEmpty"/> property will be set to true.
         /// </summary>
         public static ComparisonResults Empty { get; } = new ComparisonResults();
+
+        /// <summary>
+        /// Source is usually reguarding the oldest file and the first argument in DiffTools.CompareFiles().  This holds information about the source file.
+        /// </summary>
+        public FileLevel SourceFile { get; }
+
+        /// <summary>
+        /// Target is usually reguarding the newest file and the second argument in DiffTools.CompareFiles().  This holds information about the target file.
+        /// </summary>
+        public FileLevel TargetFile { get; }
 
         /// <summary>
         /// Indicates whether this instance contains meaningful comparison data.

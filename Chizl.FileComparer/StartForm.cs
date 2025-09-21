@@ -1,17 +1,17 @@
 ﻿using System;
 using System.IO;
 using Chizl.Rtf;
-using System.Text;
 using System.Linq;
+using System.Text;
 using System.Drawing;
 using Chizl.FileCompare;
-using Chizl.Applications;
 using System.Diagnostics;
+using Chizl.Applications;
 using System.Windows.Forms;
-using System.Collections.Generic;
+using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using System.Runtime.InteropServices;
 using System.Text.RegularExpressions;
+using System.Runtime.InteropServices;
 
 namespace Chizl.FileComparer
 {
@@ -23,6 +23,8 @@ namespace Chizl.FileComparer
         const int OLD_DROPDOWN = 1;
         const int NEW_DROPDOWN = 2;
         const int OLD_NEW_DROPDOWN = 3;
+        const int _maxSize = ((1024 * 1024) * 10);
+        const string _tmpFolder = ".\\RTF";
         const string _fileHistoryName = "./cfc_file.history";
         const string _fileIconName = "./compare.ico";
 
@@ -35,9 +37,7 @@ namespace Chizl.FileComparer
         private readonly Color HEX_COLOR = Color.FromArgb(0, 128, 0);
         private readonly Color PRINTABLE_COLOR = Color.FromArgb(0, 0, 255);
 
-        private readonly static List<double> _addPerc = new List<double>();
-        private readonly static List<double> _delPerc = new List<double>();
-        private readonly static List<double> _modPerc = new List<double>();
+        private readonly static ConcurrentDictionary<double, DiffType> _compPerc = new ConcurrentDictionary<double, DiffType>();
 
         private static readonly ConcurrentDictionary<string, int> _fileHistory = new ConcurrentDictionary<string, int>();
         private static ComparisonResults _lastFileComparison = ComparisonResults.Empty;
@@ -48,8 +48,8 @@ namespace Chizl.FileComparer
 
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
-        //private string _oldFile = "C:\\Program Files\\TechSmith\\Snagit 2024\\de-DE\\TechSmith Snagit EULA.pdf";
-        //private string _newFile = "C:\\Program Files\\TechSmith\\Snagit 2024\\en-US\\TechSmith Snagit EULA.pdf";
+        //private string _oldFile = ".\\testfiles\\large_org.log";
+        //private string _newFile = ".\\testfiles\\large_new.log";
 
         public StartForm(string[] args)
         {
@@ -62,7 +62,7 @@ namespace Chizl.FileComparer
         }
         private void StartForm_Load(object sender, EventArgs e)
         {
-            this.DoubleBuffered = true;
+            //this.DoubleBuffered = true;
 
             this.OldAsciiFile.Text = File.Exists(_oldFile) ? _oldFile : "";
             this.NewAsciiFile.Text = File.Exists(_newFile) ? _newFile : "";
@@ -76,13 +76,12 @@ namespace Chizl.FileComparer
             this.NewAsciiContent.HScroll += new EventHandler(this.RichText_HScroll);
             this.Text = About.TitleWithFileVersion;
 
+            CleanupTemp();
             ResetContent();
             LoadHistory();
 
             if (File.Exists(_fileIconName))
                 this.Icon = Common.GetIcon(_fileIconName);
-
-            // LoadTestRtf();
         }
         private void LoadTestRtf()
         {
@@ -214,6 +213,10 @@ namespace Chizl.FileComparer
         private void NewAsciiViewButton_Click(object sender, EventArgs e) => OpenExplorerAndSelectFile(NewAsciiFile.Text);
         private void OldBinaryViewButton_Click(object sender, EventArgs e) => LoadBinaryHexView(OldAsciiFile.Text, this.OldAsciiContent);
         private void NewBinaryViewButton_Click(object sender, EventArgs e) => LoadBinaryHexView(NewAsciiFile.Text, this.NewAsciiContent);
+
+        private Pen addPen = new Pen(Color.Green, 1);
+        private Pen delPen = new Pen(Color.Red, 1);
+        private Pen modPen = new Pen(Color.Orange, 1);
         private void ChangeColor_Paint(object sender, PaintEventArgs e)
         {
             if (_formResizing)
@@ -223,25 +226,22 @@ namespace Chizl.FileComparer
             var maxPerc = (double)e.ClipRectangle.Height;
             var r = e.ClipRectangle.Width;
 
-            Pen addPen = new Pen(Color.Green, 1);
-            Pen delPen = new Pen(Color.Red, 1);
-            Pen modPen = new Pen(Color.Orange, 1);
-
-            foreach (var a in _addPerc)
+            foreach ((double key, DiffType diffTp) in _compPerc.Select(s => (s.Key, s.Value)))
             {
-                var t = (float)(maxPerc * a);
-                g.DrawLine(addPen, 0, t, r, t);
+                var t = (float)(maxPerc * key);
+                var pen = diffTp.Equals(DiffType.Modified) ? modPen : diffTp.Equals(DiffType.Deleted) ? delPen : addPen;
+                g.DrawLine(pen, 0, t, r, t);
             }
-            foreach (var a in _delPerc)
-            {
-                var t = (float)(maxPerc * a);
-                g.DrawLine(delPen, 0, t, r, t);
-            }
-            foreach (var a in _modPerc)
-            {
-                var t = (float)(maxPerc * a);
-                g.DrawLine(modPen, 0, t, r, t);
-            }
+            //foreach (var a in _delPerc)
+            //{
+            //    var t = (float)(maxPerc * a);
+            //    g.DrawLine(delPen, 0, t, r, t);
+            //}
+            //foreach (var a in _modPerc)
+            //{
+            //    var t = (float)(maxPerc * a);
+            //    g.DrawLine(modPen, 0, t, r, t);
+            //}
         }
 
         private void AddModifiedLine(RichTextBox rb, ByteLevel[] charDiff, bool isNew, bool asHex = false)
@@ -318,14 +318,10 @@ namespace Chizl.FileComparer
             else if (!Disposing && !IsDisposed)
             {
                 ResetContent();
-
-                // this.OldAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
-                // this.NewAsciiContent.Font = new Font("Courier New", 8.25F, FontStyle.Regular, GraphicsUnit.Point, ((byte)(0)));
+                //ClearRichText();
 
                 this.SplitContainer1.Panel1Collapsed = false;
                 this.SplitContainer1.Panel2Collapsed = false;
-
-                ClearRichText();
 
                 var score_threshold = .30;
                 if (!string.IsNullOrWhiteSpace(ScoreThresholdDropdown.Text))
@@ -424,10 +420,38 @@ namespace Chizl.FileComparer
                 AddText(rtb, $"{line.PrintableChars}\n", BACK_COLOR, PRINTABLE_COLOR);
             }
 
-            StatusText.Text = $"HexView auto zooms text based on window.  Use Control-MouseWheel to Zoom In/Out.  Click HexView again to exit HexView.";
-            StatusText.BackColor = Color.Yellow;
-            ResetTimer.Enabled = true;
+            SetStatus($"HexView auto zooms text based on window.  Use Control-MouseWheel to Zoom In/Out.  Click HexView again to exit HexView.", Color.Yellow);
         }
+        
+        private void SetStatus(string msg, Color bgColor)
+        {
+            StatusText.Text = $"HexView auto zooms text based on window.  Use Control-MouseWheel to Zoom In/Out.  Click HexView again to exit HexView.";
+            if (!bgColor.IsEmpty)
+            {
+                // off
+                ResetTimer.Enabled = false;
+                StatusText.BackColor = bgColor;
+                // on, resets timer.
+                ResetTimer.Enabled = true;
+            }
+            StatusText.Invalidate();
+        }
+        private void CleanupTemp()
+        {
+            try
+            {
+                if (!Directory.Exists(_tmpFolder))
+                    Directory.CreateDirectory(_tmpFolder);
+            }
+            finally { };
+
+            foreach (var file in Directory.EnumerateFiles(_tmpFolder))
+            {
+                try { File.Delete(file); } 
+                catch { /* Ignore, might be open. */ }
+            }
+        }
+
         private void ResetContent(bool binaryButtonOnly = false)
         {
             this.ViewAsBinaryButtonToollbar.Visible = false;
@@ -441,7 +465,7 @@ namespace Chizl.FileComparer
             if (this.SplitContainer1.Panel2Collapsed)
                 this.SplitContainer1.Panel2Collapsed = false;
 
-            ClearRichText();
+            //ClearRichText();
 
             this.OldAsciiContent.ScrollBars = RichTextBoxScrollBars.Both;
             this.NewAsciiContent.ScrollBars = RichTextBoxScrollBars.Both;
@@ -451,6 +475,9 @@ namespace Chizl.FileComparer
         }
         private void ClearRichText()
         {
+            // reset scollbar coloring
+            _compPerc.Clear();
+
             this.OldAsciiContent.Clear();
             this.NewAsciiContent.Clear();
 
@@ -527,6 +554,8 @@ namespace Chizl.FileComparer
         }
         private void ViewAsBinaryButtonToollbar_Click(object sender, EventArgs e)
         {
+            //ClearRichText();
+
             if (ViewAsBinaryButtonToollbar.Text == _binaryViewBtnTxt)
             {
                 ViewAsBinaryButtonToollbar.Text = _asciiViewBtnTxt;
@@ -560,28 +589,20 @@ namespace Chizl.FileComparer
 
             if (_lastFileComparison.HasException)
             {
-                StatusText.Text = $"Error:  {_lastFileComparison.Exception.Message}";
-                StatusText.BackColor = Color.FromArgb(255, 192, 192);
-                StatusText.Invalidate();
+                SetStatus($"Error:  {_lastFileComparison.Exception.Message}", Color.FromArgb(255, 192, 192));
                 return;
             }
             else
             {
-                StatusText.Text = $"Line by Line Status:  Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change({_lastFileComparison.Diffs.Identical} )";
-                StatusText.BackColor = Color.Yellow;
-                StatusText.Invalidate();
+                SetStatus($"Line by Line Status:  Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change({_lastFileComparison.Diffs.Identical} )", Color.Yellow);
             }
 
             ResetTimer.Enabled = true;
-
             var lines = _lastFileComparison.LineComparison.OrderBy(o => o.LineNumber).ToArray();
+            // For Ascii, maxPerc isn't always 100% if form is zoomed.  This is not taken in account and will stay the same.
             var maxPerc = lines.Length;
             var scrollLineMarker = 0;
             StatusText.Tag = $"Lines: {lines.Length} / {lines.Count()}";
-
-            _addPerc.Clear();
-            _delPerc.Clear();
-            _modPerc.Clear();
 
             var oldRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
             var oldTextBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, false);
@@ -624,7 +645,7 @@ namespace Chizl.FileComparer
                     switch (cmpr.DiffType)
                     {
                         case DiffType.Added:
-                            _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                            _compPerc.TryAdd(((double)scrollLineMarker / (double)maxPerc), DiffType.Added);
                             if (sideBySide)
                             {
                                 oldRtfBuilder.AppendLine($"{stringFiller}", ADD_COLOR);
@@ -634,13 +655,13 @@ namespace Chizl.FileComparer
                                 oldRtfBuilder.AppendLine($"{lineString}", ADD_COLOR);
                             break;
                         case DiffType.Deleted:
-                            _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                            _compPerc.TryAdd(((double)scrollLineMarker / (double)maxPerc), DiffType.Deleted);
                             oldRtfBuilder.AppendLine($"{lineString}", DELETE_COLOR);
                             if (sideBySide)
                                 newRtfBuilder.AppendLine($"{stringFiller}", DELETE_COLOR);
                             break;
                         case DiffType.Modified:
-                            _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                            _compPerc.TryAdd(((double)scrollLineMarker / (double)maxPerc), DiffType.Modified);
                             // windows
                             var ignoreLast2 = cmpr.ByteByByteDiff[cmpr.ByteByByteDiff.Length - 2].Byte == 13;
                             // linux
@@ -728,7 +749,7 @@ namespace Chizl.FileComparer
                         switch (byteDff.DiffType)
                         {
                             case DiffType.Added:
-                                _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                                _compPerc.TryAdd(((double)scrollLineMarker / (double)maxPerc), DiffType.Added);
 
                                 if (sideBySide)
                                 {
@@ -749,7 +770,7 @@ namespace Chizl.FileComparer
 
                                 break;
                             case DiffType.Deleted:
-                                _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                                _compPerc.TryAdd(((double)scrollLineMarker / (double)maxPerc), DiffType.Deleted);
 
                                 if (sideBySide)
                                 {
@@ -764,7 +785,7 @@ namespace Chizl.FileComparer
 
                                 break;
                             case DiffType.Modified:
-                                _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
+                                _compPerc.TryAdd(((double)scrollLineMarker / (double)maxPerc), DiffType.Modified);
 
                                 if (sideBySide)
                                 {
@@ -821,10 +842,76 @@ namespace Chizl.FileComparer
                 newRtfBuilder.AppendLineRtf(newTextBuilder.GetDocument(true));  //newPlainText
             }
 
-            this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
+            var sourceFile = Path.Combine(_tmpFolder, $"{_lastFileComparison.SourceFile.Name}_src.rtf");
+            var targetFile = Path.Combine(_tmpFolder, $"{_lastFileComparison.TargetFile.Name}_trg.rtf");
+
+            if (File.Exists(sourceFile))
+                File.Delete(sourceFile);
+
+            if (File.Exists(targetFile))
+                File.Delete(targetFile);
+
+            var enc = Encoding.UTF8;
+
+            Task.Run(async () =>
+            {
+                // Marshal the call back to the UI thread to set the Rtf property
+                OldAsciiContent.Invoke((MethodInvoker)delegate
+                {
+                    this.OldAsciiContent.SuspendLayout();
+                    try
+                    {
+                        if (oldRtfBuilder.DocumentSize >= _maxSize)
+                        {
+                            File.WriteAllText(sourceFile, oldRtfBuilder.GetDocument(true));
+                            this.OldAsciiContent.LoadFile(sourceFile);
+                        }
+                        else
+                            this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
+                    }
+                    catch (Exception ex)
+                    {
+                        SetStatus(ex.Message, Color.Red);
+                    }
+                    finally
+                    {
+                        this.OldAsciiContent.ResumeLayout(true);
+                    }
+                });
+                await Task.Delay(10);
+            });
 
             if (sideBySide)
-                this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
+            {
+                Task.Run(async () =>
+                {
+                    // Marshal the call back to the UI thread to set the Rtf property
+                    NewAsciiContent.Invoke((MethodInvoker)delegate
+                    {
+                        this.NewAsciiContent.SuspendLayout();
+                        try
+                        {
+                            if (newRtfBuilder.DocumentSize >= _maxSize)
+                            {
+                                File.WriteAllText(targetFile, newRtfBuilder.GetDocument(true));
+                                this.NewAsciiContent.LoadFile(targetFile);
+                            }
+                            else
+                                this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
+                        }
+                        catch (Exception ex)
+                        {
+                            SetStatus(ex.Message, Color.Red);
+                        }
+                        finally
+                        {
+                            this.NewAsciiContent.ResumeLayout(true);
+                        }
+                    });
+                    
+                    await Task.Delay(10);
+                });
+            }
 
             this.SplitContainer1.Panel2Collapsed = !sideBySide;
 
