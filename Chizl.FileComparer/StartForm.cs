@@ -535,7 +535,7 @@ namespace Chizl.FileComparer
             else
             {
                 ViewAsBinaryButtonToollbar.Text = _binaryViewBtnTxt;
-                ShowComparison(false, true);    // Ascii is always Side By Side, 
+                ShowComparison(false, _isSideBySide);    // Ascii is always Side By Side, 
             }
         }
         private void Dropdown_SelectedIndexChanged(object sender, EventArgs e) => ViewAsBinaryButtonToollbar.Visible = false;
