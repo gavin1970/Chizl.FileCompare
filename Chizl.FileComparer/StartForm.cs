@@ -613,20 +613,29 @@ namespace Chizl.FileComparer
 
                     oldRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
                     oldRtfBuilder.Append($" ");
-                    newRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
-                    newRtfBuilder.Append($" ");
+                    if (sideBySide) 
+                    { 
+                        newRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
+                        newRtfBuilder.Append($" ");
+                    }
 
                     switch (cmpr.DiffType)
                     {
                         case DiffType.Added:
                             _addPerc.Add((double)scrollLineMarker / (double)maxPerc);
-                            oldRtfBuilder.AppendLine($"{stringFiller}", ADD_COLOR);
-                            newRtfBuilder.AppendLine($"{lineString}", ADD_COLOR);
+                            if (sideBySide)
+                            {
+                                oldRtfBuilder.AppendLine($"{stringFiller}", ADD_COLOR);
+                                newRtfBuilder.AppendLine($"{lineString}", ADD_COLOR);
+                            }
+                            else
+                                oldRtfBuilder.AppendLine($"{lineString}", ADD_COLOR);
                             break;
                         case DiffType.Deleted:
                             _delPerc.Add((double)scrollLineMarker / (double)maxPerc);
                             oldRtfBuilder.AppendLine($"{lineString}", DELETE_COLOR);
-                            newRtfBuilder.AppendLine($"{stringFiller}", DELETE_COLOR);
+                            if (sideBySide)
+                                newRtfBuilder.AppendLine($"{stringFiller}", DELETE_COLOR);
                             break;
                         case DiffType.Modified:
                             _modPerc.Add((double)scrollLineMarker / (double)maxPerc);
@@ -644,7 +653,10 @@ namespace Chizl.FileComparer
                                 switch (b.DiffType)
                                 {
                                     case DiffType.Added:
-                                        newRtfBuilder.Append($"{b.Str}", ADD_COLOR);
+                                        if (sideBySide)
+                                            newRtfBuilder.Append($"{b.Str}", ADD_COLOR);
+                                        else
+                                            oldRtfBuilder.Append($"{b.Str}", ADD_COLOR);
                                         break;
                                     case DiffType.Deleted:
                                         oldRtfBuilder.Append($"{b.Str}", DELETE_COLOR);
@@ -652,16 +664,19 @@ namespace Chizl.FileComparer
                                     case DiffType.Modified:
                                     case DiffType.None:
                                         oldRtfBuilder.Append($"{b.Str}", MODIFIED_COLOR);
-                                        newRtfBuilder.Append($"{b.Str}", MODIFIED_COLOR);
+                                        if (sideBySide)
+                                            newRtfBuilder.Append($"{b.Str}", MODIFIED_COLOR);
                                         break;
                                 }
                             }
                             oldRtfBuilder.AppendLine("");   // add carriage return
-                            newRtfBuilder.AppendLine("");   // add carriage return
+                            if (sideBySide)
+                                newRtfBuilder.AppendLine("");   // add carriage return
                             break;
                         default:
                             oldRtfBuilder.AppendLine($"{lineString}");
-                            newRtfBuilder.AppendLine($"{lineString}");
+                            if (sideBySide)
+                                newRtfBuilder.AppendLine($"{lineString}");
                             break;
                     }
                     prevLineSize = lineString.Length;
@@ -806,10 +821,10 @@ namespace Chizl.FileComparer
 
             this.OldAsciiContent.Rtf = oldRtfBuilder.GetDocument();
 
-            if (sideBySide || !useBinary)
+            if (sideBySide)
                 this.NewAsciiContent.Rtf = newRtfBuilder.GetDocument();
 
-            this.SplitContainer1.Panel2Collapsed = !sideBySide && useBinary;
+            this.SplitContainer1.Panel2Collapsed = !sideBySide;
 
             EnableButtons();
             InvalidateAll();
