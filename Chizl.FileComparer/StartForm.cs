@@ -12,7 +12,6 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
-using System.Runtime.CompilerServices;
 
 namespace Chizl.FileComparer
 {
@@ -47,10 +46,10 @@ namespace Chizl.FileComparer
         private static RichTextBox _srcRtb;
         private static RichTextBox _trgRtb;
 
-        //private string _oldFile = ".\\testfiles\\test_old.txt";
-        //private string _newFile = ".\\testfiles\\test_new.txt";
-        private string _oldFile = ".\\testfiles\\binary.old";
-        private string _newFile = ".\\testfiles\\binary.new";
+        private string _oldFile = ".\\testfiles\\test_old.txt";
+        private string _newFile = ".\\testfiles\\test_new.txt";
+        //private string _oldFile = ".\\testfiles\\binary.old";
+        //private string _newFile = ".\\testfiles\\binary.new";
         //.\testfiles\binary.old
         //private string _oldFile = ".\\testfiles\\large_org.log";
         //private string _newFile = ".\\testfiles\\large_new.log";

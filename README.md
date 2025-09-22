@@ -1,5 +1,5 @@
 # Chizl.FileCompare
-<img width="1384" alt="image" src="./imgs/winform_ascii_view.png" />
+<img width="1384" alt="image" src="./imgs/ani_image.gif" />
 
 ## About:
 * Dependencies:
