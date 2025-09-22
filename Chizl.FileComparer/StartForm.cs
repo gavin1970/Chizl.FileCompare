@@ -12,6 +12,7 @@ using System.Threading.Tasks;
 using System.Collections.Concurrent;
 using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
+using System.Runtime.CompilerServices;
 
 namespace Chizl.FileComparer
 {
@@ -46,8 +47,11 @@ namespace Chizl.FileComparer
         private static RichTextBox _srcRtb;
         private static RichTextBox _trgRtb;
 
-        private string _oldFile = ".\\testfiles\\test_old.txt";
-        private string _newFile = ".\\testfiles\\test_new.txt";
+        //private string _oldFile = ".\\testfiles\\test_old.txt";
+        //private string _newFile = ".\\testfiles\\test_new.txt";
+        private string _oldFile = ".\\testfiles\\binary.old";
+        private string _newFile = ".\\testfiles\\binary.new";
+        //.\testfiles\binary.old
         //private string _oldFile = ".\\testfiles\\large_org.log";
         //private string _newFile = ".\\testfiles\\large_new.log";
 
@@ -425,7 +429,7 @@ namespace Chizl.FileComparer
         
         private void SetStatus(string msg, Color bgColor)
         {
-            StatusText.Text = $"HexView auto zooms text based on window.  Use Control-MouseWheel to Zoom In/Out.  Click HexView again to exit HexView.";
+            StatusText.Text = msg;
             if (!bgColor.IsEmpty)
             {
                 // off
@@ -584,30 +588,29 @@ namespace Chizl.FileComparer
         {
             ClearRichText();
 
+            var scrollLineMarker = 0;
             var prevLineSize = 30;
             var useBinary = forceBinary || _lastFileComparison.IsBinary;
-
             if (_lastFileComparison.HasException)
             {
-                SetStatus($"Error:  {_lastFileComparison.Exception.Message}", Color.FromArgb(255, 192, 192));
+                SetStatus($"Exception: {_lastFileComparison.Exception.Message}", Color.FromArgb(255, 192, 192));
                 return;
             }
             else
             {
-                SetStatus($"Line by Line Status:  Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change({_lastFileComparison.Diffs.Identical} )", Color.Yellow);
+                var groups = _lastFileComparison.IsBinary ? "Bytes" : "Lines";
+                var statusType = _lastFileComparison.IsBinary ? "Binary by Byte" : $"ASCII Line by Line{(forceBinary? " in Hex": "")}";
+                SetStatus($"{statusType}: Added( {_lastFileComparison.Diffs.Added} ), Deleted( {_lastFileComparison.Diffs.Deleted} ), Modified( {_lastFileComparison.Diffs.Modified} ), No Change( {_lastFileComparison.Diffs.Identical} ), Total {groups}( {_lastFileComparison.LineComparison.Length} )", Color.FromArgb(192, 192, 0));
             }
 
-            ResetTimer.Enabled = true;
-            var lines = _lastFileComparison.LineComparison.OrderBy(o => o.LineNumber).ToArray();
-            // For Ascii, maxPerc isn't always 100% if form is zoomed.  This is not taken in account and will stay the same.
-            var maxPerc = lines.Length;
-            var scrollLineMarker = 0;
-            StatusText.Tag = $"Lines: {lines.Length} / {lines.Count()}";
-
-            var oldRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
+            var oldRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, true);
             var oldTextBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, false);
-            var newRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR });
+            var newRtfBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, true);
             var newTextBuilder = new RtfBuilder(new Color[4] { LINE_COLOR, ADD_COLOR, DELETE_COLOR, MODIFIED_COLOR }, false);
+
+            //ResetTimer.Enabled = true;
+            var lines = _lastFileComparison.LineComparison.OrderBy(o => o.LineNumber).ToArray();
+            var maxPerc = lines.Length;
 
             if (!useBinary)
             {
@@ -615,8 +618,8 @@ namespace Chizl.FileComparer
                 foreach (var cmpr in lines)
                 {
                     scrollLineMarker++;
-
-                    var lineNumber = $"{cmpr.LineNumber:0000}: ";
+                    // using (000000000:) to match up with (X8h:) - 10 bytes wide.
+                    var lineNumber = $"{cmpr.LineNumber:000000000}:";
                     var lineString = $"{cmpr.LineDiffStr}";
 
                     // removing any extra that might be residing..
@@ -634,11 +637,11 @@ namespace Chizl.FileComparer
                         lineString += "\n";
                     }
 
-                    oldRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
+                    oldRtfBuilder.Append(lineNumber, LINE_COLOR);
                     oldRtfBuilder.Append($" ");
                     if (sideBySide) 
                     { 
-                        newRtfBuilder.Append($"{lineNumber}", LINE_COLOR);
+                        newRtfBuilder.Append(lineNumber, LINE_COLOR);
                         newRtfBuilder.Append($" ");
                     }
 
@@ -726,14 +729,14 @@ namespace Chizl.FileComparer
                     {
                         if (hexSize.Equals(0))
                         {
-                            var lineNumber = $"{hexCountLineMarker:X8}";
+                            var lineNumber = $"{hexCountLineMarker:X8}h:\n";
                             hexCountLineMarker += 16;
 
-                            oldRtfBuilder.Append($" {lineNumber}h ", LINE_COLOR);
+                            oldRtfBuilder.Append(lineNumber, LINE_COLOR);
                             oldRtfBuilder.Append(" ");
                             if (sideBySide)
                             {
-                                newRtfBuilder.Append($" {lineNumber}h ", LINE_COLOR);
+                                newRtfBuilder.Append(lineNumber, LINE_COLOR);
                                 newRtfBuilder.Append(" ");
                             }
                         }
@@ -816,8 +819,8 @@ namespace Chizl.FileComparer
 
                         if (hexSize >= 16)
                         {
-                            oldRtfBuilder.Append("  "); //clears any color that might exist.
-                            newRtfBuilder.Append("  "); //clears any color that might exist.
+                            oldRtfBuilder.Append(" ; "); //clears any color that might exist.
+                            newRtfBuilder.Append(" ; "); //clears any color that might exist.
                             oldRtfBuilder.AppendLineRtf(oldTextBuilder.GetDocument(true));  //oldPlainText
                             newRtfBuilder.AppendLineRtf(newTextBuilder.GetDocument(true));  //newPlainText
 
@@ -836,8 +839,8 @@ namespace Chizl.FileComparer
                 oldRtfBuilder.Append(padString);
                 newRtfBuilder.Append(padString);
 
-                oldRtfBuilder.Append("  "); //clears any color that might exist.
-                newRtfBuilder.Append("  "); //clears any color that might exist.
+                oldRtfBuilder.Append(" ; "); //clears any color that might exist.
+                newRtfBuilder.Append(" ; "); //clears any color that might exist.
                 oldRtfBuilder.AppendLineRtf(oldTextBuilder.GetDocument(true));  //oldPlainText
                 newRtfBuilder.AppendLineRtf(newTextBuilder.GetDocument(true));  //newPlainText
             }
@@ -939,5 +942,41 @@ namespace Chizl.FileComparer
                 _trgRtb.ZoomFactor = _srcRtb.ZoomFactor;
         }
         private void Content_Leave(object sender, EventArgs e) => ZoomCheck_KeyUp(sender, new KeyEventArgs(Keys.ControlKey));
+
+        private string _selectedText = string.Empty;
+        //private string _selectedTextRTF = string.Empty;
+        private void Content_MouseUp(object sender, MouseEventArgs e)
+        {
+            if (e.Button == MouseButtons.Right)
+            {
+                var rtb = (RichTextBox)sender;
+                if (rtb.SelectedText.Length > 0)
+                {
+                    _selectedText = rtb.SelectedText;
+                    //_selectedTextRTF = rtb.SelectedRtf;
+                    RichTextContextMenus.Show(GetMenuLocation(rtb, e));
+                }
+            }
+        }
+
+        private Point GetMenuLocation(RichTextBox rtb, MouseEventArgs e)
+        {
+            var titleHeight = SplitContainer1.Top;
+            var curWidth = (int)Cursor.Size.Width / 4;
+            var addLeft = SplitContainer1.Margin.Left + curWidth;
+            var spltPanLeft = SplitContainer1.Panel1.Left + SplitContainer1.Panel1.Padding.Left + addLeft;
+
+            if (rtb.Name.StartsWith("New"))
+                spltPanLeft = SplitContainer1.Panel2.Left + addLeft;
+
+            var l = this.Left + spltPanLeft + rtb.Left;
+            var t = this.Top + rtb.Top + SplitContainer1.Top;
+            return new Point(l + e.X, t + e.Y + RichTextContextMenus.Height);
+        }
+        private void RichTextBoxCopy_Click(object sender, EventArgs e)
+        {
+            Clipboard.Clear();
+            Clipboard.SetText(_selectedText);
+        }
     }
 }

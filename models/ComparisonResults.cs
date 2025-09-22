@@ -44,12 +44,26 @@ namespace Chizl.FileCompare
             this.TargetFile = targetFile;
             this.IsBinary = sourceFile.IsBinary || targetFile.IsBinary;
             this.LineComparison = compareDiffs.ToArray();
-            this.Diffs = new DiffCounts(
-                compareDiffs.Count(w => w.DiffType == DiffType.Added),
-                compareDiffs.Count(w => w.DiffType == DiffType.Deleted),
-                compareDiffs.Count(w => w.DiffType == DiffType.Modified),
-                compareDiffs.Count(w => w.DiffType == DiffType.None)
-            );
+
+            //binary needs to be done by byte, not line
+            if (this.IsBinary)
+            {
+                this.Diffs = new DiffCounts(
+                    compareDiffs.Where(w => w.DiffType == DiffType.Added).Select(s => s.ByteByByteDiff.Length).Sum(),
+                    compareDiffs.Where(w => w.DiffType == DiffType.Deleted).Select(s => s.ByteByByteDiff.Length).Sum(),
+                    compareDiffs.Where(w => w.DiffType == DiffType.Modified).Select(s => s.ByteByByteDiff.Length).Sum(),
+                    compareDiffs.Where(w => w.DiffType == DiffType.None).Select(s => s.ByteByByteDiff.Length).Sum()
+                );
+            }
+            else
+            { 
+                this.Diffs = new DiffCounts(
+                    compareDiffs.Count(w => w.DiffType == DiffType.Added),
+                    compareDiffs.Count(w => w.DiffType == DiffType.Deleted),
+                    compareDiffs.Count(w => w.DiffType == DiffType.Modified),
+                    compareDiffs.Count(w => w.DiffType == DiffType.None)
+                );
+            }
         }
 
         /// <summary>

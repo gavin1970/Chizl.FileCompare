@@ -52,6 +52,8 @@
             this.NewBinaryViewButton = new System.Windows.Forms.Button();
             this.NewFileViewButton = new System.Windows.Forms.Button();
             this.NewAsciiButton = new System.Windows.Forms.Button();
+            this.RichTextContextMenus = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.RichTextBoxCopy = new System.Windows.Forms.ToolStripMenuItem();
             this.StartFormMenuStrip = new System.Windows.Forms.MenuStrip();
             this.FileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.ToolStripMenuItem2 = new System.Windows.Forms.ToolStripMenuItem();
@@ -73,6 +75,7 @@
             this.panel6.SuspendLayout();
             this.Panel3.SuspendLayout();
             this.Panel4.SuspendLayout();
+            this.RichTextContextMenus.SuspendLayout();
             this.StartFormMenuStrip.SuspendLayout();
             this.StartFormStatusStrip.SuspendLayout();
             this.SuspendLayout();
@@ -110,15 +113,16 @@
             this.OldAsciiContent.Location = new System.Drawing.Point(5, 36);
             this.OldAsciiContent.Name = "OldAsciiContent";
             this.OldAsciiContent.ReadOnly = true;
-            this.OldAsciiContent.ShortcutsEnabled = false;
             this.OldAsciiContent.ShowSelectionMargin = true;
             this.OldAsciiContent.Size = new System.Drawing.Size(642, 595);
             this.OldAsciiContent.TabIndex = 0;
+            this.OldAsciiContent.Tag = "1";
             this.OldAsciiContent.Text = "";
             this.OldAsciiContent.WordWrap = false;
             this.OldAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
             this.OldAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
             this.OldAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
+            this.OldAsciiContent.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Content_MouseUp);
             // 
             // panel5
             // 
@@ -234,15 +238,16 @@
             this.NewAsciiContent.Location = new System.Drawing.Point(5, 36);
             this.NewAsciiContent.Name = "NewAsciiContent";
             this.NewAsciiContent.ReadOnly = true;
-            this.NewAsciiContent.ShortcutsEnabled = false;
             this.NewAsciiContent.ShowSelectionMargin = true;
             this.NewAsciiContent.Size = new System.Drawing.Size(642, 595);
             this.NewAsciiContent.TabIndex = 1;
+            this.NewAsciiContent.Tag = "2";
             this.NewAsciiContent.Text = "";
             this.NewAsciiContent.WordWrap = false;
             this.NewAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
             this.NewAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
             this.NewAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
+            this.NewAsciiContent.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Content_MouseUp);
             // 
             // panel6
             // 
@@ -349,6 +354,20 @@
             this.NewAsciiButton.TabIndex = 2;
             this.NewAsciiButton.UseVisualStyleBackColor = true;
             this.NewAsciiButton.Click += new System.EventHandler(this.NewAsciiButton_Click);
+            // 
+            // RichTextContextMenus
+            // 
+            this.RichTextContextMenus.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.RichTextBoxCopy});
+            this.RichTextContextMenus.Name = "RichTextContextMenus";
+            this.RichTextContextMenus.Size = new System.Drawing.Size(103, 26);
+            // 
+            // RichTextBoxCopy
+            // 
+            this.RichTextBoxCopy.Name = "RichTextBoxCopy";
+            this.RichTextBoxCopy.Size = new System.Drawing.Size(102, 22);
+            this.RichTextBoxCopy.Text = "&Copy";
+            this.RichTextBoxCopy.Click += new System.EventHandler(this.RichTextBoxCopy_Click);
             // 
             // StartFormMenuStrip
             // 
@@ -489,6 +508,7 @@
             this.panel6.ResumeLayout(false);
             this.Panel3.ResumeLayout(false);
             this.Panel4.ResumeLayout(false);
+            this.RichTextContextMenus.ResumeLayout(false);
             this.StartFormMenuStrip.ResumeLayout(false);
             this.StartFormMenuStrip.PerformLayout();
             this.StartFormStatusStrip.ResumeLayout(false);
@@ -531,6 +551,8 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.ToolStripComboBox OverlayDropdown;
+        private System.Windows.Forms.ContextMenuStrip RichTextContextMenus;
+        private System.Windows.Forms.ToolStripMenuItem RichTextBoxCopy;
     }
 }
 

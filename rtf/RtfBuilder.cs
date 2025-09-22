@@ -273,7 +273,7 @@ namespace Chizl.Rtf
                     _contentTextRtf.Append($"\\red{colorIndex.R}\\green{colorIndex.G}\\blue{colorIndex.B};");
                 }
 
-                _contentTextRtf.Append($"}} {Environment.NewLine}");
+                _contentTextRtf.Append($"}}{Environment.NewLine}");
             }
         }
         private bool ValidFontSize(double fontPtSize, out string msg)
