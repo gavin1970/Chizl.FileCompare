@@ -576,7 +576,11 @@ namespace Chizl.FileComparer
             ResetTimer.Enabled = false;
             StatusText.BackColor = SystemColors.ControlDark;
         }
-        private void OverlayDropdown_SelectedIndexChanged(object sender, EventArgs e) => _isSideBySide = OverlayDropdown.SelectedIndex.Equals(0);
+        private void OverlayDropdown_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            _isSideBySide = OverlayDropdown.SelectedIndex.Equals(0);
+            CompareFiles();
+        }
         /// <summary>
         /// This method was seperated so it can be used to call, without doing a full compare on the files again.
         /// This will load the RichText components with information, both ASCII or Binary (Hex) View, and show color differences.
