@@ -5,56 +5,47 @@ namespace Chizl.FileCompare
 {
     internal static class Common
     {
-        const int charsToCheck = 1024;
-
         /// <summary>
-        /// Used LINQ.Where().Count()>1 originally, but it's scans the 
-        /// whole buffer, while looping is a few milliseconds faster.
-        /// </summary>
-        public static bool IsBinary(byte[] bytes, int bytesRead, out string errorMsg)
-        {
-            errorMsg = string.Empty;
-            try
-            {
-                int controlChars = 0;
-
-                for (int i = 0; i < bytesRead; i++)
-                {
-                    byte b = bytes[i];
-
-                    if (b == 0) // null byte
-                        return true;
-
-                    // Count ASCII control characters except newline, carriage return, tab
-                    if (b < 32 && b != 9 && b != 10 && b != 13)
-                        controlChars++;
-                }
-
-                // If more than 5% of bytes are control characters, likely binary
-                return ((double)controlChars / bytesRead) > 0.05;
-            }
-            catch (Exception ex)
-            {
-                errorMsg = $"IsBinary(byte[]) Exception:\n{ex.Message}";
-                return false;
-            }
-        }
-        /// <summary>
-        /// Used LINQ.Where().Count()>1 originally, but it's scans the 
-        /// whole buffer while looping is a few milliseconds faster.
+        /// IsBinary(): Has BOM detection for UTF encodings UTF-8 BOM, UTF-16 LE/BE and future UTF-32 LE/BE ASCII<br/>
         /// </summary>
         public static bool IsBinary(string fullPath, out string errorMsg)
         {
+            const int BytesToCheck = 1024;
+            int nullCount = 0;
             errorMsg = string.Empty;
 
             try
             {
                 using (var fs = File.OpenRead(fullPath))
                 {
-                    byte[] buffer = new byte[charsToCheck];
-                    int bytesRead = fs.Read(buffer, 0, charsToCheck);
+                    byte[] buffer = new byte[BytesToCheck];
+                    int bytesRead = fs.Read(buffer, 0, BytesToCheck);
 
-                    return IsBinary(buffer, bytesRead, out errorMsg);
+                    // BOM detection for UTF encodings
+                    if (bytesRead >= 2)
+                    {
+                        if (buffer[0] == 0xFF && buffer[1] == 0xFE) return false; // UTF-16 LE
+                        if (buffer[0] == 0xFE && buffer[1] == 0xFF) return false; // UTF-16 BE
+                    }
+                    if (bytesRead >= 3)
+                    {
+                        if (buffer[0] == 0xEF && buffer[1] == 0xBB && buffer[2] == 0xBF) return false; // UTF-8 BOM
+                    }
+                    if (bytesRead >= 4)
+                    {
+                        if (buffer[0] == 0xFF && buffer[1] == 0xFE && buffer[2] == 0x00 && buffer[3] == 0x00) return false; // UTF-32 LE
+                        if (buffer[0] == 0x00 && buffer[1] == 0x00 && buffer[2] == 0xFE && buffer[3] == 0xFF) return false; // UTF-32 BE
+                    }
+
+                    for (int i = 0; i < bytesRead; i++)
+                    {
+                        if (buffer[i] == 0x00)
+                        {
+                            nullCount++;
+                            if (nullCount > 1)
+                                return true; // definitely binary
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -62,33 +53,7 @@ namespace Chizl.FileCompare
                 errorMsg = $"IsBinary('{fullPath}') Exception:\n{ex.Message}";
             }
 
-            return false; // Found one or less null, likely text
-        }
-        /// <summary>
-        /// FNV-1a Algorithm: The logic used is the FNV-1a (Fowler-Noll-Vo) hash function. It's known for being 
-        /// fast and having a good distribution of hash values, which minimizes collisions for small data sets.         
-        /// </summary>
-        /// <param name="data">byte array</param>
-        /// <returns>Hex representation of hash</returns>
-        public static string GetHashString(params byte[] data) => ComputeHash(data).ToString("X2");
-        /// <summary>
-        /// FNV-1a Algorithm: The logic used is the FNV-1a (Fowler-Noll-Vo) hash function. It's known for being 
-        /// fast and having a good distribution of hash values, which minimizes collisions for small data sets.         
-        /// </summary>
-        /// <param name="data">byte array</param>
-        /// <returns>hash value</returns>
-        public static int ComputeHash(params byte[] data)
-        {
-            unchecked
-            {
-                const int p = 16777619;
-                int hash = (int)2166136261;
-
-                for (int i = 0; i < data.Length; i++)
-                    hash = (hash ^ data[i]) * p;
-
-                return hash;
-            }
+            return false; // one or fewer string terminators '0x00' → likely text
         }
     }
 }

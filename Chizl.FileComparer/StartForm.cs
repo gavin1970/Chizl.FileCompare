@@ -45,7 +45,7 @@ namespace Chizl.FileComparer
         private static bool _isSideBySide = true;
         private static RichTextBox _srcRtb;
         private static RichTextBox _trgRtb;
-
+        private bool _initialLoadComplete = false; 
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
         //private string _oldFile = ".\\testfiles\\binary.old";
@@ -85,6 +85,7 @@ namespace Chizl.FileComparer
 
             if (File.Exists(_fileIconName))
                 this.Icon = Common.GetIcon(_fileIconName);
+            _initialLoadComplete = true;
         }
         private void LoadTestRtf()
         {
@@ -578,6 +579,8 @@ namespace Chizl.FileComparer
         }
         private void OverlayDropdown_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (!_initialLoadComplete)
+                return;
             _isSideBySide = OverlayDropdown.SelectedIndex.Equals(0);
             CompareFiles();
         }

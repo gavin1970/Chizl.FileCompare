@@ -136,7 +136,7 @@ namespace Chizl.FileCompare
                     length--;
 
                 var bytes = byteData.Skip(i).Take(length).ToArray();
-                retVal.TryAdd(Common.GetHashString(bytes), i);
+                retVal.TryAdd(CHash.GetFnv1aHash(bytes), i);
 
                 // if (maxLoopCount <= 0 || retVal.Count == length)
                 if (maxLoopCount <= 0 || retVal.Count == (length * 2))
@@ -172,7 +172,7 @@ namespace Chizl.FileCompare
                 sizeSearch = srcBytes.Length - initSrcIndex;
 
             var searchSrcBytes = srcBytes.AsSpan(initSrcIndex, sizeSearch).ToArray();
-            var quickSearch = Common.GetHashString(searchSrcBytes);
+            var quickSearch = CHash.GetFnv1aHash(searchSrcBytes);
             var hashLookupData = BuildHashLookups(trgBytes, initTrgIndex, sizeSearch, srcBytes[initSrcIndex]);
 
             if (hashLookupData.TryGetValue(quickSearch, out var index))

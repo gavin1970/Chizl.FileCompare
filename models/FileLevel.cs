@@ -39,7 +39,7 @@ namespace Chizl.FileCompare
                 if (loadContentType == LoadContentType.InMemory)
                     _bytes = File.ReadAllBytes(fi.FullName);
 
-                this.Format = Common.IsBinary(this.Bytes, this.Bytes.Length, out string err)
+                this.Format = Common.IsBinary(fi.FullName, out string err)
                                 && string.IsNullOrWhiteSpace(err)
                                 ? FileFormat.Binary
                                 : FileFormat.Ascii;
