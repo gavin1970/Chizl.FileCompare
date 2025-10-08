@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 
 namespace Chizl.FileCompare
@@ -8,6 +9,65 @@ namespace Chizl.FileCompare
     {
         static readonly string[] _validMakePrintableTypes = new string[] { "char", "string" };
 
+        /// <summary>
+        /// Returns if Exception has value or not.<br/>
+        /// Will catch the following as Empty.<br/>
+        /// *... = new Exception("")<br/>
+        /// *... = new Exception(null)<br/>
+        /// *... = null
+        /// </summary>
+        /// <returns>if Exception var is null, without message, or an "Exception of type Exception".  Occurs when using 'new Exception(null)'.</returns>
+        public static bool IsEmpty(this Exception ex)
+        {
+            bool retVal;
+
+            try
+            {
+                retVal = ex == null ||
+                        string.IsNullOrWhiteSpace(ex.Message) ||
+                        ex.Message == "Exception of type 'System.Exception' was thrown.";   //var ex = new Exeception(null);
+            }
+            catch
+            {
+                //exception object thows an error, this means it's invalid/empty
+                retVal = true;
+            }
+
+            return retVal;
+        }
+        /// <summary>
+        /// Generic IsEmpty for classes that might not have the property.
+        /// </summary>
+        /// <typeparam name="T">Generic ISerializable class</typeparam>
+        /// <returns>returns if default value of class or null</returns>
+        public static bool IsEmpty<T>(this T @this)
+            where T : class, ISerializable
+        {
+            var t = typeof(T);
+            var tDefault = default(T);
+            var retVal = false;
+
+            switch (t.Name)
+            {
+                case nameof(Exception):
+                    if (@this == null)
+                        retVal = true;
+                    else
+                    {
+                        var ex = (Exception)Convert.ChangeType(@this, typeof(Exception));
+                        if (string.IsNullOrWhiteSpace(ex.Message))
+                            retVal = true;
+                    }
+                    break;
+                default:
+                    //generic
+                    if (@this == null || @this == tDefault)
+                        retVal = true;
+                    break;
+            }
+
+            return retVal;
+        }
         /// <summary>
         /// Since netstandard2.0 doesn't have Math.Clamp, this will do it.
         /// </summary>
@@ -82,7 +142,6 @@ namespace Chizl.FileCompare
         /// </param>
         /// <returns>string with printable value.</returns>
         public static string MakePrintable(this string @this, char replaceWith = '.') => MakeValidRange(@this, (char)32, (char)126, replaceWith);
-
         /// <summary>
         /// Replaces chars in a string into "replaceWith" arguement when outside the range of firstValid and lastValid arguements.
         /// <code>
