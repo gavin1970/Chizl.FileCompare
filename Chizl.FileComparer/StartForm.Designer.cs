@@ -65,6 +65,7 @@
             this.CompareButtonToollbar = new System.Windows.Forms.Button();
             this.ResetTimer = new System.Windows.Forms.Timer(this.components);
             this.ViewAsBinaryButtonToollbar = new System.Windows.Forms.Button();
+            this.characterToolTip = new System.Windows.Forms.ToolTip(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -122,6 +123,7 @@
             this.OldAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
             this.OldAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
             this.OldAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
+            this.OldAsciiContent.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Content_MouseMove);
             this.OldAsciiContent.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Content_MouseUp);
             // 
             // panel5
@@ -247,6 +249,7 @@
             this.NewAsciiContent.KeyDown += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyDown);
             this.NewAsciiContent.KeyUp += new System.Windows.Forms.KeyEventHandler(this.ZoomCheck_KeyUp);
             this.NewAsciiContent.Leave += new System.EventHandler(this.Content_Leave);
+            this.NewAsciiContent.MouseMove += new System.Windows.Forms.MouseEventHandler(this.Content_MouseMove);
             this.NewAsciiContent.MouseUp += new System.Windows.Forms.MouseEventHandler(this.Content_MouseUp);
             // 
             // panel6
@@ -553,6 +556,7 @@
         private System.Windows.Forms.ToolStripComboBox OverlayDropdown;
         private System.Windows.Forms.ContextMenuStrip RichTextContextMenus;
         private System.Windows.Forms.ToolStripMenuItem RichTextBoxCopy;
+        private System.Windows.Forms.ToolTip characterToolTip;
     }
 }
 

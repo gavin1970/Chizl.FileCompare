@@ -10,8 +10,8 @@ using Chizl.Applications;
 using System.Windows.Forms;
 using System.Threading.Tasks;
 using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
 using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Chizl.FileComparer
 {
@@ -41,18 +41,24 @@ namespace Chizl.FileComparer
 
         private static readonly ConcurrentDictionary<string, int> _fileHistory = new ConcurrentDictionary<string, int>();
         private static ComparisonResults _lastFileComparison = ComparisonResults.Empty;
+        private static int _hoveringIndex = 0;
         private static bool _formResizing = false;
         private static bool _isSideBySide = true;
         private static RichTextBox _srcRtb;
         private static RichTextBox _trgRtb;
-        private bool _initialLoadComplete = false; 
+
+        private bool _initialLoadComplete = false;
+        private string _selectedText = string.Empty;
+        //private string _selectedTextRTF = string.Empty;
+
         private string _oldFile = ".\\testfiles\\test_old.txt";
         private string _newFile = ".\\testfiles\\test_new.txt";
-        //private string _oldFile = ".\\testfiles\\binary.old";
-        //private string _newFile = ".\\testfiles\\binary.new";
-        //.\testfiles\binary.old
-        //private string _oldFile = ".\\testfiles\\large_org.log";
-        //private string _newFile = ".\\testfiles\\large_new.log";
+        /*
+        private string _oldFile = ".\\testfiles\\binary.old";
+        private string _newFile = ".\\testfiles\\binary.new";
+        private string _oldFile = ".\\testfiles\\large_org.log";
+        private string _newFile = ".\\testfiles\\large_new.log";
+        /**/
 
         public StartForm(string[] args)
         {
@@ -927,7 +933,31 @@ namespace Chizl.FileComparer
             EnableButtons();
             InvalidateAll();
         }
+        
+        private void Content_MouseMove(object sender, MouseEventArgs e)
+        {
+            if (_lastFileComparison.IsBinary)
+                return;
 
+            _srcRtb = (RichTextBox)sender;
+
+            //RichTextBox rtb = sender as RichTextBox;
+            if (_srcRtb == null || _srcRtb.Text.Length == 0) return;
+
+            // Get the index of the character at the mouse's current position
+            var index = _srcRtb.GetCharIndexFromPosition(e.Location);
+
+            // Check if the index is within the bounds of the text
+            if (index >= 0 && index < _srcRtb.Text.Length)
+                // mouse index
+                _hoveringIndex = index;
+            else
+            {
+                _hoveringIndex = 0;
+                // Clear the tooltip if not over a character
+                characterToolTip.SetToolTip(_srcRtb, string.Empty);
+            }
+        }
         /// <summary>
         /// Use to sync up ZoomFactor between RichTextBoxes.
         /// </summary>
@@ -937,6 +967,52 @@ namespace Chizl.FileComparer
             {
                 _srcRtb = (RichTextBox)sender;
                 _trgRtb = _srcRtb.Name.Equals("OldAsciiContent") ? NewAsciiContent : OldAsciiContent;
+            }
+            else if (e.KeyCode == Keys.F1 && _hoveringIndex > 0 && !_lastFileComparison.IsBinary)
+            {
+                char[] seps = new char[] { '\n', '\r' };
+                // don't remove empty lines, as that would remove 1 or 2 byte length based on OS.
+                var lines = _srcRtb.Text.Substring(0, _hoveringIndex).Split(seps);
+                int strLen = 0;
+
+                if (lines.Length > 0)
+                {
+                    var startingCharLoc = 11;
+                    var sb = new StringBuilder();
+
+                    if (lines.Length == 1)
+                    {
+                        startingCharLoc = lines[0].IndexOf(": ");
+                        if (startingCharLoc > -1)
+                            startingCharLoc += 2;
+                        else
+                            startingCharLoc = lines[0].Length;
+
+                        startingCharLoc = Math.Min(startingCharLoc, lines[0].Length);
+
+                        sb.Append(lines[0].Substring(startingCharLoc));
+                        strLen = sb.Length;
+                    }
+                    else
+                    {
+                        foreach (var l in lines)
+                        {
+                            startingCharLoc = l.IndexOf(": ");
+                            if (startingCharLoc > -1)
+                                startingCharLoc += 2;
+                            else
+                                startingCharLoc = l.Length;
+                            
+                            startingCharLoc = Math.Min(startingCharLoc, l.Length);
+                            
+                            sb.AppendLine(l.Substring(startingCharLoc));
+                            strLen = sb.ToString().Length - 2;
+                        }
+                    }
+
+                    var tip = $"Character: '{_srcRtb.Text[_hoveringIndex]}'\nByte Location: {strLen - 1}\nCharacter Location: {strLen}";
+                    characterToolTip.SetToolTip(_srcRtb, tip);
+                }
             }
         }
         private void ZoomCheck_KeyUp(object sender, KeyEventArgs e)
@@ -949,8 +1025,6 @@ namespace Chizl.FileComparer
         }
         private void Content_Leave(object sender, EventArgs e) => ZoomCheck_KeyUp(sender, new KeyEventArgs(Keys.ControlKey));
 
-        private string _selectedText = string.Empty;
-        //private string _selectedTextRTF = string.Empty;
         private void Content_MouseUp(object sender, MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
