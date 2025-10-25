@@ -32,7 +32,7 @@ namespace Chizl.FileCompare
     public sealed class DiffTool
     {
         /// <summary>
-        /// 
+        /// Reutrns the file content in Binary Hex
         /// </summary>
         /// <param name="fullPath">Path to file to view as Hex</param>
         /// <returns>ByteLineLevel array.  Each ByteLineLevel holds offset, hex values, and printable characters.</returns>
@@ -62,22 +62,22 @@ namespace Chizl.FileCompare
             }
         }
         /// <summary>
-        /// Compares two files, either ASCII/text or binary.
-        /// - For binary files, the result indicates IsBinary and can be displayed appropriately.
+        /// Compares two files, either ASCII/text or binary.<br/>
+        /// - For binary files, differences are computed using a custom Fnv1 algorythm. The result indicates IsBinary and can be displayed appropriately.<br/>
         /// - For ASCII files, differences are computed using Myers diff with optional modify detection.
         /// </summary>
         /// <param name="sourceFile">The source file (considered the older file).</param>
         /// <param name="targetFile">The target file (considered the newer file).</param>
         /// <param name="scoreThreshold">
-        /// ASCII COMPARE ONLY: The similarity threshold (0–1) for a line to be considered a modification (~)
+        /// ASCII COMPARE ONLY: The similarity threshold (0–1) for a line to be considered a modification (~)<br/>
         /// instead of a separate Add (+) or Delete (-).
         /// </param>
         /// <param name="lineLookAhead">
-        /// ASCII COMPARE ONLY: The number of subsequent lines to inspect when merging adjacent
+        /// ASCII COMPARE ONLY: The number of subsequent lines to inspect when merging adjacent<br/>
         /// delete+insert pairs into modifications.
         /// </param>
         /// <returns>
-        /// A <see cref="ComparisonResults"/> object with details for each line, 
+        /// A <see cref="ComparisonResults"/> object with details for each line,<br/>
         /// and inline character-level highlights for modified lines.
         /// </returns>
         public static ComparisonResults CompareFiles(string sourceFile, string targetFile, double scoreThreshold = 0.30, byte lineLookAhead = 3)

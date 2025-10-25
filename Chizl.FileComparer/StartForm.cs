@@ -1,17 +1,18 @@
-﻿using System;
-using System.IO;
-using Chizl.Rtf;
-using System.Linq;
-using System.Text;
-using System.Drawing;
+﻿using Chizl.Applications;
 using Chizl.FileCompare;
-using System.Diagnostics;
-using Chizl.Applications;
-using System.Windows.Forms;
-using System.Threading.Tasks;
+using Chizl.Rtf;
+using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Runtime.ConstrainedExecution;
 using System.Runtime.InteropServices;
+using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Chizl.FileComparer
 {
@@ -24,6 +25,7 @@ namespace Chizl.FileComparer
         const int NEW_DROPDOWN = 2;
         const int OLD_NEW_DROPDOWN = 3;
         const int _maxSize = ((1024 * 1024) * 10);
+        const bool _skipSave = true;
         const string _tmpFolder = ".\\RTF";
         const string _fileHistoryName = "./cfc_file.history";
         const string _fileIconName = "./compare.ico";
@@ -348,6 +350,8 @@ namespace Chizl.FileComparer
                 _lastFileComparison = DiffTool.CompareFiles(oldFile, newFile, score_threshold, 3);
                 //Task.Run(() => { _lastFileComparison = DiffTool.CompareFiles(oldFile, newFile, score_threshold, 3); }).Wait();
 
+                Task.Run(() => { SaveToDisk(_lastFileComparison); });
+
                 // Add OLD_DROPDOWN as the value, to represent Old File downdown component.  If Key already exists,
                 // check existingvalue and if New File dropdown (2), make it 3, to represent both Old and New
                 // should have it.  If existing value isn't 2, leave it as it, because 1 or 3 already exists.
@@ -370,6 +374,63 @@ namespace Chizl.FileComparer
                     UpdateHistoryFile();
                 }
             }
+        }
+        /// <summary>
+        /// Only used to build out demo for other project.
+        /// </summary>
+        /// <param name="results"></param>
+        private void SaveToDisk(ComparisonResults results)
+        {
+            if (results.IsBinary || _skipSave)
+                return;
+
+            var sb = new StringBuilder();
+            foreach(CompareDiff line in results.LineComparison)
+            {
+                var cleanedLine = line.LineDiffStr.Replace("\r", "").Replace("\n", "\U000023CE").Replace("\t", "\U00002B7E");
+
+                switch (line.DiffType)
+                {
+                    case DiffType.Added:
+                        sb.AppendLine($"A,{line.LineNumber},{cleanedLine}");
+                        break;
+                    case DiffType.Deleted:
+                        sb.AppendLine($"D,{line.LineNumber},{cleanedLine}");
+                        break;
+                    case DiffType.Modified:
+                        var dfType = $"{line.ByteByByteDiff[0].DiffType.ToString()[0]}";
+                        var s = new StringBuilder();
+                        if (dfType != "M")
+                            s.Append($"{dfType},{line.LineNumber},");
+                        
+                        var started = false;
+                        foreach (var chr in line.ByteByByteDiff)
+                        {
+                            var ndfType = $"{chr.DiffType.ToString()[0]}";
+                            if (ndfType != "M")
+                            {
+                                if (!ndfType.Equals(dfType))
+                                {
+                                    dfType = ndfType;
+                                    if (s.Length > 0)
+                                        s.Append($"{Environment.NewLine}");
+                                    s.Append($"{dfType},{line.LineNumber},{chr.Hex}");
+                                    started = true;
+                                }
+                                else
+                                    s.Append($"{(started ? "-" : "")}{chr.Hex}");
+                            }
+                        }
+                        sb.AppendLine(s.ToString());
+                        var mytmp = sb.ToString();
+                        break;
+                    case DiffType.None:
+                    default:
+                        break;
+                }
+            }
+
+            File.WriteAllText(".\\diffDump.log", sb.ToString());            
         }
         private void UpdateHistoryFile()
         {

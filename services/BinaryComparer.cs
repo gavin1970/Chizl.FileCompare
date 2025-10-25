@@ -148,6 +148,7 @@ namespace Chizl.FileCompare
         private static bool FindMatch(byte[] srcBytes, int srcIndex, byte[] trgBytes, int trgIndex, out int srcNext)
         {
             int byteMatch = _foreSight; // adjustable during search.
+            var sizeSearch = 8;
 
             int initSrcIndex = srcIndex;
             int initTrgIndex = trgIndex;
@@ -167,7 +168,6 @@ namespace Chizl.FileCompare
             int orgInitSrcIndex = initSrcIndex;
             int orgInitTrgIndex = initTrgIndex;
 
-            var sizeSearch = 8;
             if (initSrcIndex + sizeSearch > srcBytes.Length)
                 sizeSearch = srcBytes.Length - initSrcIndex;
 
