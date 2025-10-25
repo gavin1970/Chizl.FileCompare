@@ -939,23 +939,44 @@ namespace Chizl.FileComparer
             if (_lastFileComparison.IsBinary)
                 return;
 
-            _srcRtb = (RichTextBox)sender;
+            // if it's null, lets get current mouse over.
+            if(_srcRtb == null)
+                _srcRtb = (RichTextBox)sender;
 
-            //RichTextBox rtb = sender as RichTextBox;
-            if (_srcRtb == null || _srcRtb.Text.Length == 0) return;
+            // if current is not what was prior, we want to clear
+            // tooltip so it's now showing up on the other.
+            if (_srcRtb != (RichTextBox)sender)
+            {
+                ClearToolTip();
+                // set with current
+                _srcRtb = (RichTextBox)sender;
+            }
+
+            // if it's empty, no tooltip needed.
+            if (_srcRtb.Text.Length == 0) return;
 
             // Get the index of the character at the mouse's current position
             var index = _srcRtb.GetCharIndexFromPosition(e.Location);
 
             // Check if the index is within the bounds of the text
             if (index >= 0 && index < _srcRtb.Text.Length)
-                // mouse index
-                _hoveringIndex = index;
+                _hoveringIndex = index; // mouse index
             else
+                ClearToolTip();         // clear tooltip and _src/_trg vars.
+        }
+        private void ClearToolTip()
+        {
+            _hoveringIndex = 0;
+            // Clear the tooltip if not over a character
+            if (_srcRtb != null)
             {
-                _hoveringIndex = 0;
-                // Clear the tooltip if not over a character
+                _trgRtb = _srcRtb.Name.Equals("OldAsciiContent") ? NewAsciiContent : OldAsciiContent;
+
                 characterToolTip.SetToolTip(_srcRtb, string.Empty);
+                characterToolTip.SetToolTip(_trgRtb, string.Empty);
+
+                _srcRtb = null;
+                _trgRtb = null;
             }
         }
         /// <summary>
@@ -1014,6 +1035,8 @@ namespace Chizl.FileComparer
                     characterToolTip.SetToolTip(_srcRtb, tip);
                 }
             }
+            else
+                ClearToolTip();
         }
         private void ZoomCheck_KeyUp(object sender, KeyEventArgs e)
         {
