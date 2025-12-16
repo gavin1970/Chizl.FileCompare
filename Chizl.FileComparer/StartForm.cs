@@ -446,6 +446,9 @@ namespace Chizl.FileComparer
         }
         private void OpenExplorerAndSelectFile(string filePath)
         {
+            if (string.IsNullOrWhiteSpace(filePath))
+                return;
+
             if (File.Exists(filePath))
                 // The /select parameter tells explorer.exe to open to the file's directory and select the specified file.
                 Process.Start("explorer.exe", $"/select,\"{filePath}\"");
@@ -455,7 +458,7 @@ namespace Chizl.FileComparer
         }
         private void LoadBinaryHexView(string filePath, RichTextBox rtb)
         {
-            if (!File.Exists(filePath))
+            if (string.IsNullOrWhiteSpace(filePath) || !File.Exists(filePath))
                 return;
 
             ResetContent(true);
@@ -560,13 +563,30 @@ namespace Chizl.FileComparer
         }
         private void EnableButtons()
         {
-            var oldEnabled = !string.IsNullOrWhiteSpace(this.OldAsciiFile.Text) && File.Exists(this.OldAsciiFile.Text) && this.OldAsciiContent.Text.Length > 0;
+            var oldEnabled = !string.IsNullOrWhiteSpace(this.OldAsciiFile.Text) && File.Exists(this.OldAsciiFile.Text);
+            this.OldStatusText.Visible = oldEnabled;
             this.OldBinaryViewButton.Enabled = oldEnabled;
             this.OldFileViewButton.Enabled = oldEnabled;
 
-            var newEnabled = !string.IsNullOrWhiteSpace(this.NewAsciiFile.Text) && File.Exists(this.NewAsciiFile.Text) && this.NewAsciiContent.Text.Length > 0;
+            var newEnabled = !string.IsNullOrWhiteSpace(this.NewAsciiFile.Text) && File.Exists(this.NewAsciiFile.Text);
+            this.SeperatorStatusBar.Visible = newEnabled;
+            this.NewStatusText.Visible = newEnabled;
+
             this.NewBinaryViewButton.Enabled = newEnabled;
             this.NewFileViewButton.Enabled = newEnabled;
+
+            this.StatusText.Visible = !newEnabled;
+
+            if (newEnabled)
+            {
+                var fi = new FileInfo(this.NewAsciiFile.Text);
+                this.NewStatusText.Text = $"Size: {fi.Length.FormatByComma()}b\nMod Date: {fi.LastWriteTime:MM:dd:yyyy HH:mm:ss}";
+            }
+            if (oldEnabled)
+            {
+                var fi = new FileInfo(this.OldAsciiFile.Text);
+                this.OldStatusText.Text = $"Size: {fi.Length.FormatByComma()}b\nMod Date: {fi.LastWriteTime:MM:dd:yyyy HH:mm:ss}";
+            }
         }
         private void SetCurrentFontSize(RichTextBox rtb)
         {

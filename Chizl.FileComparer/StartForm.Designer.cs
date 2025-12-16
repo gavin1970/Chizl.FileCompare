@@ -66,6 +66,9 @@
             this.ResetTimer = new System.Windows.Forms.Timer(this.components);
             this.ViewAsBinaryButtonToollbar = new System.Windows.Forms.Button();
             this.characterToolTip = new System.Windows.Forms.ToolTip(this.components);
+            this.OldStatusText = new System.Windows.Forms.ToolStripStatusLabel();
+            this.SeperatorStatusBar = new System.Windows.Forms.ToolStripStatusLabel();
+            this.NewStatusText = new System.Windows.Forms.ToolStripStatusLabel();
             ((System.ComponentModel.ISupportInitialize)(this.SplitContainer1)).BeginInit();
             this.SplitContainer1.Panel1.SuspendLayout();
             this.SplitContainer1.Panel2.SuspendLayout();
@@ -198,7 +201,6 @@
             this.OldBinaryViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.binary_wheel;
             this.OldBinaryViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.OldBinaryViewButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldBinaryViewButton.Enabled = false;
             this.OldBinaryViewButton.Location = new System.Drawing.Point(3, 0);
             this.OldBinaryViewButton.Name = "OldBinaryViewButton";
             this.OldBinaryViewButton.Size = new System.Drawing.Size(21, 21);
@@ -212,7 +214,6 @@
             this.OldFileViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.view_on;
             this.OldFileViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.OldFileViewButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.OldFileViewButton.Enabled = false;
             this.OldFileViewButton.Location = new System.Drawing.Point(24, 0);
             this.OldFileViewButton.Name = "OldFileViewButton";
             this.OldFileViewButton.Size = new System.Drawing.Size(21, 21);
@@ -324,7 +325,6 @@
             this.NewBinaryViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.binary_wheel;
             this.NewBinaryViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.NewBinaryViewButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.NewBinaryViewButton.Enabled = false;
             this.NewBinaryViewButton.Location = new System.Drawing.Point(2, 0);
             this.NewBinaryViewButton.Name = "NewBinaryViewButton";
             this.NewBinaryViewButton.Size = new System.Drawing.Size(21, 21);
@@ -338,7 +338,6 @@
             this.NewFileViewButton.BackgroundImage = global::Chizl.FileComparer.Properties.Resources.view_on;
             this.NewFileViewButton.BackgroundImageLayout = System.Windows.Forms.ImageLayout.Zoom;
             this.NewFileViewButton.Dock = System.Windows.Forms.DockStyle.Right;
-            this.NewFileViewButton.Enabled = false;
             this.NewFileViewButton.Location = new System.Drawing.Point(23, 0);
             this.NewFileViewButton.Name = "NewFileViewButton";
             this.NewFileViewButton.Size = new System.Drawing.Size(21, 21);
@@ -434,7 +433,10 @@
             this.StartFormStatusStrip.BackColor = System.Drawing.SystemColors.ControlDarkDark;
             this.StartFormStatusStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.toolStripStatusPadding,
-            this.StatusText});
+            this.StatusText,
+            this.OldStatusText,
+            this.SeperatorStatusBar,
+            this.NewStatusText});
             this.StartFormStatusStrip.Location = new System.Drawing.Point(0, 663);
             this.StartFormStatusStrip.Name = "StartFormStatusStrip";
             this.StartFormStatusStrip.Size = new System.Drawing.Size(1344, 22);
@@ -452,7 +454,7 @@
             // 
             this.StatusText.BackColor = System.Drawing.SystemColors.ControlDark;
             this.StatusText.Name = "StatusText";
-            this.StatusText.Size = new System.Drawing.Size(1319, 17);
+            this.StatusText.Size = new System.Drawing.Size(426, 17);
             this.StatusText.Spring = true;
             this.StatusText.Text = "Ready...";
             this.StatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -482,6 +484,32 @@
             this.ViewAsBinaryButtonToollbar.UseVisualStyleBackColor = true;
             this.ViewAsBinaryButtonToollbar.Visible = false;
             this.ViewAsBinaryButtonToollbar.Click += new System.EventHandler(this.ViewAsBinaryButtonToollbar_Click);
+            // 
+            // OldStatusText
+            // 
+            this.OldStatusText.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.OldStatusText.Name = "OldStatusText";
+            this.OldStatusText.Size = new System.Drawing.Size(426, 17);
+            this.OldStatusText.Spring = true;
+            this.OldStatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.OldStatusText.Visible = false;
+            // 
+            // SeperatorStatusBar
+            // 
+            this.SeperatorStatusBar.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.SeperatorStatusBar.Name = "SeperatorStatusBar";
+            this.SeperatorStatusBar.Size = new System.Drawing.Size(10, 17);
+            this.SeperatorStatusBar.Text = "|";
+            this.SeperatorStatusBar.Visible = false;
+            // 
+            // NewStatusText
+            // 
+            this.NewStatusText.BackColor = System.Drawing.SystemColors.ControlDark;
+            this.NewStatusText.Name = "NewStatusText";
+            this.NewStatusText.Size = new System.Drawing.Size(426, 17);
+            this.NewStatusText.Spring = true;
+            this.NewStatusText.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.NewStatusText.Visible = false;
             // 
             // StartForm
             // 
@@ -557,6 +585,9 @@
         private System.Windows.Forms.ContextMenuStrip RichTextContextMenus;
         private System.Windows.Forms.ToolStripMenuItem RichTextBoxCopy;
         private System.Windows.Forms.ToolTip characterToolTip;
+        private System.Windows.Forms.ToolStripStatusLabel OldStatusText;
+        private System.Windows.Forms.ToolStripStatusLabel SeperatorStatusBar;
+        private System.Windows.Forms.ToolStripStatusLabel NewStatusText;
     }
 }
 
