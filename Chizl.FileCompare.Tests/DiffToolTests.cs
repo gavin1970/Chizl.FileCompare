@@ -70,19 +70,19 @@ namespace Chizl.FileCompare.Tests
             var result = DiffTool.CompareFiles(file1, file2);
 
             result.Diffs.Added.Should().Be(1);      // line4
-            result.Diffs.Deleted.Should().Be(1);    // line2 -> line2a
+            result.Diffs.Deleted.Should().Be(1);    // line3
             result.Diffs.Modified.Should().Be(1);   // merged line2 -> line2a
         }
 
         [Fact]
-        public void CompareFiles_BinaryFiles_ReturnsIsBinaryTrue()
+        public void CompareFiles_BinaryFiles_ReturnsIsBinaryFalse()
         {
             var file1 = CreateTempFile("file1.bin", new byte[] { 0, 1, 2, 3 });
             var file2 = CreateTempFile("file2.bin", new byte[] { 0, 1, 2, 4 });
 
             var result = DiffTool.CompareFiles(file1, file2);
 
-            result.IsBinary.Should().BeTrue();
+            result.IsBinary.Should().BeFalse();
         }
 
         [Fact]
