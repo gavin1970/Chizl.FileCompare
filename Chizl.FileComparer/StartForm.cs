@@ -1,6 +1,7 @@
 ﻿using Chizl.Applications;
 using Chizl.FileCompare;
 using Chizl.Rtf;
+using Chizl.ThreadSupport;
 using System;
 using System.Collections.Concurrent;
 using System.Diagnostics;
@@ -598,49 +599,64 @@ namespace Chizl.FileComparer
             float newFontSize = currentFontSize * (rtb.ClientRectangle.Width / textSize.Width);
             rtb.Font = new Font(rtb.Font.FontFamily, newFontSize);
         }
+
+        private static ABool _isScrolling = ABool.False;
+
         private void ApplyScroll(RichTextBox Source, RichTextBox Target, ScrollBarDirection Direction)
         {
-            // unhook target from relevant event, otherwise we end up in an infinite loop!
-            switch (Direction)
+            //atomic threadsafe bool - prevents more than 1 caller into this method.
+            if (!_isScrolling.TrySetTrue()) 
+                return;
+            
+            try
             {
-                case ScrollBarDirection.SB_VERT:
-                    Target.VScroll -= RichText_VScroll;
-                    break;
-                case ScrollBarDirection.SB_HORZ:
-                    Target.HScroll -= RichText_HScroll;
-                    break;
+                // unhook target from relevant event, otherwise we end up in an infinite loop!
+                //switch (Direction)
+                //{
+                //    case ScrollBarDirection.SB_VERT:
+                //        Target.VScroll -= RichText_VScroll;
+                //        break;
+                //    case ScrollBarDirection.SB_HORZ:
+                //        Target.HScroll -= RichText_HScroll;
+                //        break;
+                //}
+
+                IntPtr ptrLparam = new IntPtr(0);
+                IntPtr ptrWparam;
+
+                // Prepare scroll info struct
+                SCROLLINFO si = new SCROLLINFO();
+                si.cbSize = (uint)Marshal.SizeOf(si);
+                si.fMask = (uint)ScrollInfoMask.SIF_ALL;
+
+                // Get current scroller posion
+                ExternApi.GetScrollInfo(Source.Handle, (int)Direction, ref si);
+
+                // if we're tracking, set target to current track position
+                if ((si.nTrackPos > 0) || ((si.nTrackPos == 0) && (si.nPos != 0)))
+                    si.nPos = si.nTrackPos;
+
+                // Reposition scroller
+                ExternApi.SetScrollInfo(Target.Handle, (int)Direction, ref si, true);
+                ptrWparam = new IntPtr(ExternApi.SB_THUMBTRACK + 0x10000 * si.nPos);
+
+                // send the relevant message to the target control, and rehook the event
+                switch (Direction)
+                {
+                    case ScrollBarDirection.SB_VERT:
+                        ExternApi.SendMessage(Target.Handle, ExternApi.WM_VSCROLL, ptrWparam, ptrLparam);
+                        //Target.VScroll += new EventHandler(this.RichText_VScroll);
+                        break;
+                    case ScrollBarDirection.SB_HORZ:
+                        ExternApi.SendMessage(Target.Handle, ExternApi.WM_HSCROLL, ptrWparam, ptrLparam);
+                        //Target.HScroll += new EventHandler(this.RichText_HScroll);
+                        break;
+                }
             }
-
-            IntPtr ptrLparam = new IntPtr(0);
-            IntPtr ptrWparam;
-
-            // Prepare scroll info struct
-            SCROLLINFO si = new SCROLLINFO();
-            si.cbSize = (uint)Marshal.SizeOf(si);
-            si.fMask = (uint)ScrollInfoMask.SIF_ALL;
-
-            // Get current scroller posion
-            ExternApi.GetScrollInfo(Source.Handle, (int)Direction, ref si);
-
-            // if we're tracking, set target to current track position
-            if ((si.nTrackPos > 0) || ((si.nTrackPos == 0) && (si.nPos != 0)))
-                si.nPos = si.nTrackPos;
-
-            // Reposition scroller
-            ExternApi.SetScrollInfo(Target.Handle, (int)Direction, ref si, true);
-            ptrWparam = new IntPtr(ExternApi.SB_THUMBTRACK + 0x10000 * si.nPos);
-
-            // send the relevant message to the target control, and rehook the event
-            switch (Direction)
+            finally
             {
-                case ScrollBarDirection.SB_VERT:
-                    ExternApi.SendMessage(Target.Handle, ExternApi.WM_VSCROLL, ptrWparam, ptrLparam);
-                    Target.VScroll += new EventHandler(this.RichText_VScroll);
-                    break;
-                case ScrollBarDirection.SB_HORZ:
-                    ExternApi.SendMessage(Target.Handle, ExternApi.WM_HSCROLL, ptrWparam, ptrLparam);
-                    Target.HScroll += new EventHandler(this.RichText_HScroll);
-                    break;
+                // reset, allowing other callers.
+                _isScrolling.SetFalse();
             }
         }
         private void ViewAsBinaryButtonToollbar_Click(object sender, EventArgs e)

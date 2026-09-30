@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("chizl.com")]
 [assembly: AssemblyProduct("Chizl.FileComparer")]
-[assembly: AssemblyCopyright("© 2025 chizl.com")]
+[assembly: AssemblyCopyright("© 2026 chizl.com")]
 [assembly: AssemblyTrademark("chizl.com ™")]
 [assembly: AssemblyCulture("")]
 
@@ -29,8 +29,8 @@ using System.Runtime.InteropServices;
 //      Build Number
 //      Revision
 // 
-[assembly: AssemblyVersion("5.12.0.0")]
-[assembly: AssemblyFileVersion("5.12.16.1377")]
-[assembly: AssemblyInformationalVersion("5.12.16.0")]
+[assembly: AssemblyVersion("6.9.0.0")]
+[assembly: AssemblyFileVersion("6.9.30.65")]
+[assembly: AssemblyInformationalVersion("6.9.30.0")]
 [assembly: AssemblyKeyFileAttribute("")]
 [assembly: AssemblyDelaySignAttribute(false)]
